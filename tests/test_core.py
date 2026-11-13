@@ -109,8 +109,16 @@ def test_intro_plays_once_at_start_and_missing_file_is_skipped(tmp_path):
         assert opened == ["sound:~/x/intro.mp3"]
     finally:
         eng.stop()
+    from pathlib import Path
     from wurubururu import actions
     assert actions.play_sound(str(tmp_path / "none.mp3")) is False
+    assert Path(actions.bundled_intro()).is_file()
+    eng, _, opened = make_engine(intro={"enabled": True, "file": ""})
+    try:
+        eng.start()
+        assert opened == [f"sound:{actions.bundled_intro()}"], "경로를 비우면 기본 인트로"
+    finally:
+        eng.stop()
 
 
 def test_engine_alert_flow_and_buttons():

@@ -71,7 +71,7 @@ class Engine:
             self._threads.append(t)
         self.leds.flash("test", 1)
         intro = self.cfg.get("intro", {})
-        if intro.get("enabled") and intro.get("file") and self._play_sound(intro["file"]):
+        if intro.get("enabled") and self._play_sound(intro.get("file") or actions.bundled_intro()):
             self.note("인트로 재생")
         self.note("시작")
 

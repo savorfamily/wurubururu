@@ -84,8 +84,11 @@ wurubururu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
 
 ## 인트로 음원
 
-프로그램을 켤 때 `~/.wurubururu/intro.mp3`가 있으면 한 번 재생합니다. 파일 위치와 사용 여부는 설정 파일 `[intro]`에서 바꿉니다.
-음원 파일은 이 저장소에 들어 있지 않습니다. 원하는 파일을 직접 넣어 쓰세요.
+프로그램을 켤 때 용팔이(YONGFLY)의 앨범 「긍정주의자 (Positiveist)」 수록곡 도입부를 한 번 재생합니다.
+끄려면 설정 파일 `[intro]`의 `enabled = false`, 다른 음원을 쓰려면 `file`에 경로를 적습니다.
+
+이 음원은 MIT 적용 대상이 아니며 모든 권리가 보유됩니다. 자세한 내용은
+[src/wurubururu/assets/LICENSE-AUDIO.md](src/wurubururu/assets/LICENSE-AUDIO.md).
 
 ## 구조
 
@@ -119,4 +122,6 @@ pytest
 
 ## 라이선스
 
-코드는 MIT. 인트로 등 음원 파일은 MIT 적용 대상이 아니며 저장소에 포함하지 않습니다.
+코드는 MIT.
+
+인트로 음원(`src/wurubururu/assets/intro.mp3`)은 MIT 적용 제외이며 모든 권리 보유(All rights reserved)입니다.

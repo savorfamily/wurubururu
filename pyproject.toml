@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "딴지일보 우르부르(WebToy, 2001)를 macOS / Windows 11에서 되살리는 알림 단말 프로그램"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "MIT (code only; bundled audio is All Rights Reserved, see src/wurubururu/assets/LICENSE-AUDIO.md)" }
 dependencies = ["pyusb>=1.2"]
 
 [project.optional-dependencies]
@@ -24,7 +24,7 @@ wurubururu = "wurubururu.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-wurubururu = ["default_config.toml", "web.html"]
+wurubururu = ["default_config.toml", "web.html", "assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

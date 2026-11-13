@@ -44,6 +44,12 @@ def speak(text: str, cfg: dict | None = None) -> bool:
         return False
 
 
+def bundled_intro() -> str:
+    """프로그램에 들어 있는 기본 인트로 음원의 경로."""
+    from importlib import resources
+    return str(resources.files("wurubururu").joinpath("assets", "intro.mp3"))
+
+
 def play_sound(path: str) -> bool:
     """음원 파일(mp3, wav, m4a)을 한 번 재생한다. 재생을 시작했으면 True."""
     from pathlib import Path
