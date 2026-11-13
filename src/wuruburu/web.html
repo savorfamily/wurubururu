@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우르부르</title>
+<style>
+  :root { --bg:#f6f4ee; --card:#fff; --ink:#1f1e1b; --mute:#77736a; --line:#e2ded3; --accent:#c8501e; --ok:#2f7a4f; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1b1a18; --card:#262522; --ink:#eeeae0; --mute:#a09b90; --line:#3a3833; --accent:#f08a5d; --ok:#7fd1a0; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.6 -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:860px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.02em; }
+  h2 { font-size:15px; margin:0 0 10px; }
+  .sub { color:var(--mute); margin:0 0 22px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .pill { border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:13px; color:var(--mute); }
+  .pill.on { color:var(--accent); border-color:var(--accent); }
+  .pill.ok { color:var(--ok); border-color:var(--ok); }
+  button { font:inherit; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  ul { list-style:none; margin:0; padding:0; }
+  li { padding:8px 0; border-top:1px solid var(--line); }
+  li:first-child { border-top:0; }
+  li small { color:var(--mute); display:block; }
+  .empty { color:var(--mute); }
+  textarea { width:100%; height:340px; font:13px/1.5 ui-monospace, Consolas, monospace; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:10px; }
+  pre { margin:0; font:12px/1.6 ui-monospace, Consolas, monospace; color:var(--mute); white-space:pre-wrap; max-height:220px; overflow:auto; }
+  #msg { color:var(--accent); font-size:13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>우르부르</h1>
+  <p class="sub">귀가 깜빡이면 알림입니다. 왼발은 열기, 오른발은 듣기, 머리는 끄기.</p>
+
+  <section>
+    <h2>상태</h2>
+    <div class="row" id="pills"></div>
+  </section>
+
+  <section>
+    <h2>확인하지 않은 알림</h2>
+    <ul id="alerts"><li class="empty">불러오는 중</li></ul>
+  </section>
+
+  <section>
+    <h2>바로 해보기</h2>
+    <div class="row">
+      <button data-cmd="open_latest">최근 알림 열기</button>
+      <button data-cmd="speak_latest">읽어주기</button>
+      <button data-cmd="ack_all">모두 확인</button>
+      <button data-cmd="toggle_dnd">방해 금지</button>
+      <button data-cmd="briefing">브리핑</button>
+      <button data-cmd="pomodoro_toggle">집중 타이머</button>
+      <button data-cmd="radio_toggle">라디오</button>
+      <button data-cmd="radio_next">다음 방송</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="pill">LED 시험</span>
+      <button data-led="left">왼쪽</button>
+      <button data-led="right">오른쪽</button>
+      <button data-led="both">양쪽</button>
+      <button data-led="urgent">급함</button>
+      <button data-led="alarm">경보</button>
+      <button data-led="test">전체</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>설정 파일</h2>
+    <textarea id="cfg" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="save">저장</button>
+      <span id="msg"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>기록</h2>
+    <pre id="log"></pre>
+  </section>
+</main>
+<script>
+const TOKEN = "__TOKEN__";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function post(path, body) {
+  const r = await fetch(path, { method:"POST", headers:{ "Content-Type":"application/json", "X-Wuruburu-Token":TOKEN }, body:JSON.stringify(body) });
+  return r.json();
+}
+async function refresh() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    const pills = [
+      `<span class="pill ${s.device_error ? "on" : "ok"}">${s.device_error ? "기기 오류: " + esc(s.device_error) : "기기 연결됨"}</span>`,
+      `<span class="pill">AI: ${esc(s.provider)}</span>`,
+      s.dnd ? `<span class="pill on">방해 금지</span>` : "",
+      s.focus ? `<span class="pill on">집중 중</span>` : "",
+      s.radio ? `<span class="pill on">라디오: ${esc(s.radio)}</span>` : "",
+      ...s.sources.map(x => `<span class="pill ${x.error ? "on" : "ok"}">${esc(x.name)}${x.error ? ": " + esc(x.error) : ""}</span>`),
+    ];
+    $("pills").innerHTML = pills.join("");
+    $("alerts").innerHTML = s.alerts.length
+      ? s.alerts.slice().reverse().map(a => `<li>${esc(a.title)}<small>${esc(a.kind)} · ${esc(a.priority)}${a.summary ? " · " + esc(a.summary) : ""}</small></li>`).join("")
+      : `<li class="empty">없음</li>`;
+    $("log").textContent = s.log.slice().reverse().join("\n");
+  } catch (e) { $("pills").innerHTML = `<span class="pill on">프로그램에 연결할 수 없음</span>`; }
+}
+document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => post("/api/command", { command:b.dataset.cmd }).then(refresh));
+document.querySelectorAll("[data-led]").forEach(b => b.onclick = () => post("/api/led", { pattern:b.dataset.led }));
+$("save").onclick = async () => {
+  const r = await post("/api/config", { text:$("cfg").value });
+  $("msg").textContent = r.ok ? "저장했습니다. 프로그램을 다시 시작하면 적용됩니다." : "저장 실패: " + (r.error || "");
+};
+fetch("/api/config").then(r => r.json()).then(d => $("cfg").value = d.text);
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>

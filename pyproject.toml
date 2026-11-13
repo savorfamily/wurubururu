@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wuruburu"
+version = "0.1.0"
+description = "딴지일보 우르부르(WebToy, 2001)를 macOS / Windows 11에서 되살리는 알림 단말 프로그램"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = ["pyusb>=1.2"]
+
+[project.optional-dependencies]
+google = ["google-api-python-client>=2.100", "google-auth-oauthlib>=1.1"]
+tray = ["pystray>=0.19", "pillow>=10"]
+all = ["wuruburu[google,tray]"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+wuruburu = "wuruburu.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+wuruburu = ["default_config.toml", "web.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

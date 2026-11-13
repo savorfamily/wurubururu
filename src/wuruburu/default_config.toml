@@ -1,0 +1,100 @@
+# 우르부르 설정 파일
+# 위치: ~/.wuruburu/config.toml  (wuruburu config 명령으로 경로 확인)
+
+[device]
+mock = false                 # true면 기기 없이 화면에 LED 상태만 출력
+
+[device.buttons]             # 어느 비트가 어느 버튼인지 (wuruburu buttons 로 확인 후 수정)
+left = 0x01
+right = 0x02
+mute = 0x04
+long_ms = 700
+double_ms = 350
+
+[ai]
+provider = "gemini"          # gemini | claude | grok | claude_cli | none
+privacy = "headers"          # headers: 보낸 사람·제목만 전송 / snippet: 본문 미리보기도 전송
+persona = ""                 # 말투 (보이스 스킨). 예: "딴지일보 말투로 능청스럽게"
+language = "한국어"
+
+[ai.gemini]
+api_key = ""                 # 비워 두면 환경변수 GEMINI_API_KEY 사용
+model = "gemini-3.5-flash-lite"
+
+[ai.claude]
+api_key = ""                 # 환경변수 ANTHROPIC_API_KEY. Claude Console에서 발급 (Pro 구독과 별도 과금)
+model = "claude-haiku-5-5"
+
+[ai.grok]
+api_key = ""                 # 환경변수 XAI_API_KEY
+model = "grok-4.7"
+
+[ai.claude_cli]              # Claude Code가 설치·로그인돼 있으면 Pro 구독 사용량으로 동작
+command = "claude"
+
+[google]
+client_secret = "~/.wuruburu/client_secret.json"   # Google Cloud에서 받은 OAuth 클라이언트 파일
+
+[gmail]
+enabled = true
+interval = 60                # 초
+query = "is:unread in:inbox newer_than:1d"
+
+[calendar]
+enabled = true
+interval = 120
+lead_minutes = 10
+
+[sitewatch]
+enabled = false
+interval = 120
+fail_threshold = 2           # 연속 실패 횟수
+urls = []                    # 예: ["https://example.com"]
+
+[pomodoro]
+work_minutes = 25
+break_minutes = 5
+
+[radio]
+player = ""                  # 비워 두면 mpv, ffplay, vlc 순으로 자동 탐색
+stations = [
+  # { name = "방송 이름", url = "https://..." },
+]
+
+[speech]
+enabled = true
+voice = ""                   # macOS 예: "Yuna"
+audio_device = ""            # macOS에서 우르부르 스피커 이름을 지정하면 그쪽으로만 말함
+
+[dnd]
+minutes = 60
+
+[web]
+port = 8737
+
+# 알림 종류와 중요도에 따른 LED 패턴.
+# 이름(left, right, both, urgent, alarm, pulse ...) 또는 [[값, 0.1초 단위], ...]
+[patterns]
+"mail.urgent" = "urgent"
+"mail.normal" = "left"
+"calendar.normal" = "right"
+"calendar.urgent" = "both"
+"site.urgent" = "alarm"
+"pomodoro.normal" = "both"
+"notify.normal" = "pulse"
+"notify.urgent" = "urgent"
+focus = "solid_right"        # 집중 타이머 진행 중 표시
+
+# 버튼 동작. "버튼.동작" = "명령"
+# 명령: open_latest, speak_latest, ack_all, toggle_dnd, briefing,
+#       radio_toggle, radio_next, pomodoro_toggle, none
+[buttons]
+"left.click" = "open_latest"
+"left.long" = "radio_toggle"
+"left.double" = "radio_next"
+"right.click" = "speak_latest"
+"right.long" = "pomodoro_toggle"
+"right.double" = "briefing"
+"mute.click" = "ack_all"
+"mute.long" = "toggle_dnd"
+"mute.double" = "briefing"
