@@ -50,7 +50,7 @@ class LedPlayer:
         self._stop = threading.Event()
         self._lock = threading.Lock()
         self.error: str | None = None
-        self._thread = threading.Thread(target=self._run, name="wuruburu-led", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="wurubururu-led", daemon=True)
         self._thread.start()
 
     def set_base(self, pattern) -> None:

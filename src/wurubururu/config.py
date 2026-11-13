@@ -7,13 +7,13 @@ import tomllib
 from importlib import resources
 from pathlib import Path
 
-HOME = Path(os.environ.get("WURUBURU_HOME", "~/.wuruburu")).expanduser()
+HOME = Path(os.environ.get("WURUBURURU_HOME", "~/.wurubururu")).expanduser()
 CONFIG_PATH = HOME / "config.toml"
 TOKEN_PATH = HOME / "web_token"
 
 
 def default_text() -> str:
-    return resources.files("wuruburu").joinpath("default_config.toml").read_text(encoding="utf-8")
+    return resources.files("wurubururu").joinpath("default_config.toml").read_text(encoding="utf-8")
 
 
 def _merge(base: dict, over: dict) -> dict:

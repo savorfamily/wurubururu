@@ -10,7 +10,7 @@ from ..engine import Alert
 
 def check(url: str, timeout: int = 10) -> str | None:
     """정상이면 None, 문제가 있으면 이유를 돌려준다."""
-    req = urllib.request.Request(url, headers={"User-Agent": "wuruburu-sitewatch"})
+    req = urllib.request.Request(url, headers={"User-Agent": "wurubururu-sitewatch"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return None if r.status < 500 else f"HTTP {r.status}"

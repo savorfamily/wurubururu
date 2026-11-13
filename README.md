@@ -1,4 +1,4 @@
-# 우르부르 (wuruburu)
+# wurubururu
 
 2001년 딴지일보가 만든 인터넷 라디오 단말 **우르부르(WebToy)** 를 요즘 컴퓨터에서 다시 쓰기 위한 프로그램입니다.
 원래 서버는 사라졌지만 기기 자체는 멀쩡합니다. 이 프로그램은 귀의 LED, 발과 머리의 버튼, 스피커를 직접 제어해서
@@ -17,8 +17,9 @@
 | 읽어주기 | 알림 요약과 아침 브리핑을 스피커로 읽어줍니다 (말투 지정 가능) |
 | 라디오 | 인터넷 방송을 틀고 버튼으로 채널을 넘깁니다 |
 | 집중 타이머 | 25분 집중 / 5분 휴식 |
-| 외부 알림 | `wuruburu notify "빌드 끝"` 한 줄로 다른 프로그램이 귀를 깜빡이게 합니다 |
+| 외부 알림 | `wurubururu notify "빌드 끝"` 한 줄로 다른 프로그램이 귀를 깜빡이게 합니다 |
 | 방해 금지 | 급한 알림만 통과 |
+| 인트로 | 프로그램을 켤 때 인트로 음원을 한 번 재생합니다 |
 
 ### 버튼 기본 배치
 
@@ -33,7 +34,7 @@
 ## 설치
 
 ```
-pip install "wuruburu[all] @ git+https://github.com/<계정>/wuruburu"
+pip install "wurubururu[all] @ git+https://github.com/<계정>/wurubururu"
 ```
 
 - **macOS:** `brew install libusb`
@@ -43,19 +44,19 @@ pip install "wuruburu[all] @ git+https://github.com/<계정>/wuruburu"
 ## 처음 한 번: 기기 확인
 
 ```
-wuruburu info       # 기기가 잡히는지
-wuruburu leds       # 비트별로 어느 귀가 무슨 색인지
-wuruburu buttons    # 어느 버튼이 어느 비트인지
+wurubururu info       # 기기가 잡히는지
+wurubururu leds       # 비트별로 어느 귀가 무슨 색인지
+wurubururu buttons    # 어느 버튼이 어느 비트인지
 ```
 
-버튼 비트가 기본값과 다르면 설정 파일의 `[device.buttons]`를 고칩니다. 기기 없이 둘러보려면 `wuruburu --mock run`.
+버튼 비트가 기본값과 다르면 설정 파일의 `[device.buttons]`를 고칩니다. 기기 없이 둘러보려면 `wurubururu --mock run`.
 
 ## 실행
 
 ```
-wuruburu config     # 설정 파일 만들고 위치 출력
-wuruburu login      # Google 계정 연결 (아래 'Google 연결' 참고)
-wuruburu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
+wurubururu config     # 설정 파일 만들고 위치 출력
+wurubururu login      # Google 계정 연결 (아래 'Google 연결' 참고)
+wurubururu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
 ```
 
 ## AI 고르기
@@ -70,7 +71,7 @@ wuruburu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
 | `claude_cli` | 설치·로그인된 Claude Code | Claude 구독(Pro 등) 사용량으로 동작 |
 | `none` | 없음 | 분류·요약 없이 모든 메일을 보통 알림으로 처리 |
 
-모델 이름은 각 `[ai.<이름>]` 절의 `model`에서 바꿉니다. 연결 시험: `wuruburu ai "안녕"`.
+모델 이름은 각 `[ai.<이름>]` 절의 `model`에서 바꿉니다. 연결 시험: `wurubururu ai "안녕"`.
 
 **개인정보:** 기본값 `privacy = "headers"`에서는 보낸 사람과 제목만 AI로 전송합니다.
 `"snippet"`으로 바꾸면 본문 미리보기도 전송되어 요약이 좋아집니다.
@@ -78,8 +79,13 @@ wuruburu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
 ## Google 연결
 
 1. [Google Cloud Console](https://console.cloud.google.com/)에서 프로젝트를 만들고 Gmail API와 Calendar API를 켭니다.
-2. OAuth 클라이언트(데스크톱 앱)를 만들어 JSON을 내려받아 `~/.wuruburu/client_secret.json`에 둡니다.
-3. `wuruburu login`을 실행하면 브라우저가 열립니다. 읽기 전용 권한만 요청합니다.
+2. OAuth 클라이언트(데스크톱 앱)를 만들어 JSON을 내려받아 `~/.wurubururu/client_secret.json`에 둡니다.
+3. `wurubururu login`을 실행하면 브라우저가 열립니다. 읽기 전용 권한만 요청합니다.
+
+## 인트로 음원
+
+프로그램을 켤 때 `~/.wurubururu/intro.mp3`가 있으면 한 번 재생합니다. 파일 위치와 사용 여부는 설정 파일 `[intro]`에서 바꿉니다.
+음원 파일은 이 저장소에 들어 있지 않습니다. 원하는 파일을 직접 넣어 쓰세요.
 
 ## 구조
 
@@ -107,6 +113,10 @@ pytest
 - 원본 설치 프로그램과 드라이버는 딴지그룹과 Micronas의 저작물이라 이 저장소에 포함하지 않습니다.
 - 이 프로젝트는 딴지그룹과 관계없는 비공식 프로젝트입니다.
 
+## 만든 사람
+
+용팔이 (YONGFLY)
+
 ## 라이선스
 
-MIT
+코드는 MIT. 인트로 등 음원 파일은 MIT 적용 대상이 아니며 저장소에 포함하지 않습니다.

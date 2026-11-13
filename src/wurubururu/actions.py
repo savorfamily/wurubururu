@@ -44,6 +44,36 @@ def speak(text: str, cfg: dict | None = None) -> bool:
         return False
 
 
+def play_sound(path: str) -> bool:
+    """음원 파일(mp3, wav, m4a)을 한 번 재생한다. 재생을 시작했으면 True."""
+    from pathlib import Path
+    f = Path(path).expanduser()
+    if not f.is_file():
+        return False
+    try:
+        if sys.platform == "darwin":
+            subprocess.Popen(["afplay", str(f)])
+        elif sys.platform == "win32":
+            script = ("Add-Type -AssemblyName PresentationCore; "
+                      "$p = New-Object System.Windows.Media.MediaPlayer; "
+                      "$p.Open([Uri]$env:WURUBURURU_SOUND); $p.Play(); "
+                      "while (-not $p.NaturalDuration.HasTimeSpan) { Start-Sleep -Milliseconds 100 }; "
+                      "Start-Sleep -Seconds ([int]$p.NaturalDuration.TimeSpan.TotalSeconds + 1)")
+            import os
+            subprocess.Popen(["powershell", "-NoProfile", "-Command", script],
+                             env={**os.environ, "WURUBURURU_SOUND": str(f.resolve())},
+                             creationflags=0x08000000)
+        else:
+            exe = shutil.which("ffplay") or shutil.which("mpv")
+            if not exe:
+                return False
+            args = ["-nodisp", "-autoexit", "-loglevel", "quiet"] if "ffplay" in exe else ["--no-video", "--really-quiet"]
+            subprocess.Popen([exe, *args, str(f)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except OSError:
+        return False
+
+
 class Radio:
     """외부 재생기(mpv, ffplay, vlc)로 인터넷 방송을 튼다."""
 

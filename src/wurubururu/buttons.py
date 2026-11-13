@@ -83,7 +83,7 @@ class ButtonWatcher:
         self.interval = interval
         self.error: str | None = None
         self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._run, name="wuruburu-buttons", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="wurubururu-buttons", daemon=True)
 
     def start(self) -> None:
         self._thread.start()

@@ -4,12 +4,12 @@ import urllib.request
 
 import pytest
 
-from wuruburu import ai, config
-from wuruburu.buttons import GestureDetector
-from wuruburu.device import MockDevice
-from wuruburu.engine import Alert, Engine
-from wuruburu.leds import BUILTIN, LedPlayer, parse_pattern
-from wuruburu.sources.sitewatch import SiteWatchSource
+from wurubururu import ai, config
+from wurubururu.buttons import GestureDetector
+from wurubururu.device import MockDevice
+from wurubururu.engine import Alert, Engine
+from wurubururu.leds import BUILTIN, LedPlayer, parse_pattern
+from wurubururu.sources.sitewatch import SiteWatchSource
 
 
 def feed(det, seq):
@@ -97,8 +97,20 @@ def make_engine(**over):
     cfg = config.load(path=config.HOME / "does-not-exist.toml")
     cfg.update(over)
     said, opened = [], []
-    eng = Engine(cfg, MockDevice(), FakeAI(), speak=lambda t, c: said.append(t), open_url=opened.append)
+    eng = Engine(cfg, MockDevice(), FakeAI(), speak=lambda t, c: said.append(t), open_url=opened.append,
+                 play_sound=lambda path: opened.append(f"sound:{path}") or True)
     return eng, said, opened
+
+
+def test_intro_plays_once_at_start_and_missing_file_is_skipped(tmp_path):
+    eng, _, opened = make_engine(intro={"enabled": True, "file": "~/x/intro.mp3"})
+    try:
+        eng.start()
+        assert opened == ["sound:~/x/intro.mp3"]
+    finally:
+        eng.stop()
+    from wurubururu import actions
+    assert actions.play_sound(str(tmp_path / "none.mp3")) is False
 
 
 def test_engine_alert_flow_and_buttons():
@@ -210,14 +222,14 @@ def test_web_api_requires_token(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "HOME", tmp_path)
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.toml")
     monkeypatch.setattr(config, "TOKEN_PATH", tmp_path / "web_token")
-    from wuruburu import web
+    from wurubururu import web
     eng, _, _ = make_engine()
     server = web.start(eng, 0)
     port = server.server_address[1]
     def call(path, body=None, token=None):
         req = urllib.request.Request(f"http://127.0.0.1:{port}{path}",
                                      data=json.dumps(body).encode() if body is not None else None,
-                                     headers={"X-Wuruburu-Token": token} if token else {})
+                                     headers={"X-Wurubururu-Token": token} if token else {})
         try:
             with urllib.request.urlopen(req, timeout=5) as r:
                 return r.status, json.loads(r.read())

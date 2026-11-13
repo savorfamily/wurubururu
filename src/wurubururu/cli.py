@@ -1,15 +1,15 @@
 """명령줄 진입점.
 
-  wuruburu run                 상주 실행 (알림 감시 + 설정 화면 + 트레이)
-  wuruburu info                기기 인식 확인
-  wuruburu leds                LED 비트 하나씩 점등 (어느 귀·어느 색인지 확인용)
-  wuruburu buttons             버튼 값 실시간 표시 (어느 비트가 어느 버튼인지 확인용)
-  wuruburu blink <패턴> [횟수]  LED 패턴 재생 (left, right, both, urgent, alarm ...)
-  wuruburu notify "제목" [본문] 실행 중인 프로그램에 알림 보내기 (작업 완료 알림 등)
-  wuruburu say "문장"           우르부르 스피커로 말하기
-  wuruburu ai "질문"            설정된 AI 연결 시험
-  wuruburu login               Google 계정 연결
-  wuruburu config              설정 파일 위치 출력 (없으면 생성)
+  wurubururu run                 상주 실행 (알림 감시 + 설정 화면 + 트레이)
+  wurubururu info                기기 인식 확인
+  wurubururu leds                LED 비트 하나씩 점등 (어느 귀·어느 색인지 확인용)
+  wurubururu buttons             버튼 값 실시간 표시 (어느 비트가 어느 버튼인지 확인용)
+  wurubururu blink <패턴> [횟수]  LED 패턴 재생 (left, right, both, urgent, alarm ...)
+  wurubururu notify "제목" [본문] 실행 중인 프로그램에 알림 보내기 (작업 완료 알림 등)
+  wurubururu say "문장"           우르부르 스피커로 말하기
+  wurubururu ai "질문"            설정된 AI 연결 시험
+  wurubururu login               Google 계정 연결
+  wurubururu config              설정 파일 위치 출력 (없으면 생성)
 """
 from __future__ import annotations
 
@@ -68,12 +68,12 @@ def cmd_notify(args, cfg):
             "priority": "urgent" if args.urgent else "normal"}
     req = urllib.request.Request(
         f"http://127.0.0.1:{cfg['web']['port']}/api/notify", data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json", "X-Wuruburu-Token": config.web_token()})
+        headers={"Content-Type": "application/json", "X-Wurubururu-Token": config.web_token()})
     try:
         with urllib.request.urlopen(req, timeout=5) as r:
             print(r.read().decode())
     except OSError as e:
-        sys.exit(f"실행 중인 우르부르에 연결하지 못했습니다 (wuruburu run 먼저): {e}")
+        sys.exit(f"실행 중인 우르부르에 연결하지 못했습니다 (wurubururu run 먼저): {e}")
 
 
 def cmd_say(args, cfg):
@@ -116,7 +116,7 @@ def cmd_run(args, cfg):
     try:
         dev = open_device(mock=mock, verbose=mock)
     except DeviceError as e:
-        sys.exit(f"{e}\n기기 없이 시험하려면: wuruburu --mock run")
+        sys.exit(f"{e}\n기기 없이 시험하려면: wurubururu --mock run")
     try:
         provider = get_provider(cfg.get("ai", {}))
     except AIError as e:
@@ -138,7 +138,7 @@ def cmd_run(args, cfg):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="wuruburu", description="우르부르 알림 단말",
+    p = argparse.ArgumentParser(prog="wurubururu", description="우르부르 알림 단말",
                                 epilog=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--mock", action="store_true", help="기기 없이 가짜 장치로 실행")

@@ -22,7 +22,7 @@ MAX_BODY = 256 * 1024
 
 
 def make_handler(engine: Engine, token: str):
-    page = resources.files("wuruburu").joinpath("web.html").read_text(encoding="utf-8")
+    page = resources.files("wurubururu").joinpath("web.html").read_text(encoding="utf-8")
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):  # 콘솔을 조용히
@@ -57,7 +57,7 @@ def make_handler(engine: Engine, token: str):
         def do_POST(self):
             if not self._local():
                 return self._send(403, {"error": "local only"})
-            if not hmac.compare_digest(self.headers.get("X-Wuruburu-Token", ""), token):
+            if not hmac.compare_digest(self.headers.get("X-Wurubururu-Token", ""), token):
                 return self._send(401, {"error": "token"})
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -94,5 +94,5 @@ def make_handler(engine: Engine, token: str):
 
 def start(engine: Engine, port: int) -> ThreadingHTTPServer:
     server = ThreadingHTTPServer(("127.0.0.1", port), make_handler(engine, config.web_token()))
-    threading.Thread(target=server.serve_forever, name="wuruburu-web", daemon=True).start()
+    threading.Thread(target=server.serve_forever, name="wurubururu-web", daemon=True).start()
     return server

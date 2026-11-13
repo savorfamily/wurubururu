@@ -32,4 +32,4 @@ def run(engine, url: str) -> None:
         pystray.Menu.SEPARATOR,
         item("끝내기", lambda icon, _: icon.stop()),
     )
-    pystray.Icon("wuruburu", _icon_image(), "우르부르", menu).run()
+    pystray.Icon("wurubururu", _icon_image(), "우르부르", menu).run()

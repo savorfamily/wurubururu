@@ -31,11 +31,11 @@ class Alert:
 
 class Engine:
     def __init__(self, cfg: dict, device: Device, provider: Provider | None = None,
-                 speak=actions.speak, open_url=actions.open_url):
+                 speak=actions.speak, open_url=actions.open_url, play_sound=actions.play_sound):
         self.cfg = cfg
         self.device = device
         self.provider = provider
-        self._speak, self._open_url = speak, open_url
+        self._speak, self._open_url, self._play_sound = speak, open_url, play_sound
         self.alerts: list[Alert] = []
         self._posted: set[tuple[str, str]] = set()   # 이미 알린 사건 (확인 후 다시 울리지 않게)
         self.log: deque[str] = deque(maxlen=80)
@@ -66,10 +66,13 @@ class Engine:
         self.buttons.start()
         for src in self.sources:
             t = threading.Thread(target=self._run_source, args=(src,), daemon=True,
-                                 name=f"wuruburu-{src.name}")
+                                 name=f"wurubururu-{src.name}")
             t.start()
             self._threads.append(t)
         self.leds.flash("test", 1)
+        intro = self.cfg.get("intro", {})
+        if intro.get("enabled") and intro.get("file") and self._play_sound(intro["file"]):
+            self.note("인트로 재생")
         self.note("시작")
 
     def stop(self) -> None:
