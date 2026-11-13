@@ -138,11 +138,11 @@ wurubururu ai "안녕"              # AI 연결 시험
 
 ## 인트로 음원
 
-프로그램을 켤 때 용팔이(YONGFLY)의 앨범 「긍정주의자 (Positiveist)」 수록곡 도입부를 한 번 재생합니다.
-끄려면 설정 파일 `[intro]`의 `enabled = false`, 다른 음원을 쓰려면 `file`에 경로를 적습니다.
+용팔이(YONGFLY)의 앨범 「긍정주의자 (Positiveist)」 수록곡 : 너를 잊지 못하는건 마음의 착각, 너를 떠나 보낸 날의 마음의 병, 눈물 가득 나는 날의 추억의 전주곡, 슬픔의 전주곡이 수록되었습니다. 곡의 원본은 (https://www.youtube.com/watch?v=1NcHxJ1TgVI) 를 통해 들으실 수 있습니다.
 
-이 음원은 MIT 적용 대상이 아니며 모든 권리가 보유됩니다. 자세한 내용은
-[src/wurubururu/assets/LICENSE-AUDIO.md](src/wurubururu/assets/LICENSE-AUDIO.md).
+인트로를 끄려면 설정 파일 `[intro]`의 `enabled = false`, 다른 음원을 쓰려면 `file`에 경로를 적습니다.
+
+이 음원은 MIT 적용 대상이 아니며 모든 권리가 보유됩니다. 자세한 내용은 [src/wurubururu/assets/LICENSE-AUDIO.md](https://github.com/savorfamily/wurubururu/blob/main/src/wurubururu/assets/LICENSE-AUDIO.md).
 
 ## 구조
 
