@@ -5,118 +5,472 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>우르부르</title>
 <style>
-  :root { --bg:#f6f4ee; --card:#fff; --ink:#1f1e1b; --mute:#77736a; --line:#e2ded3; --accent:#c8501e; --ok:#2f7a4f; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#1b1a18; --card:#262522; --ink:#eeeae0; --mute:#a09b90; --line:#3a3833; --accent:#f08a5d; --ok:#7fd1a0; } }
-  * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.6 -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--ink); }
-  main { max-width:860px; margin:0 auto; padding:28px 20px 60px; }
-  h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.02em; }
-  h2 { font-size:15px; margin:0 0 10px; }
-  .sub { color:var(--mute); margin:0 0 22px; }
-  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  :root { --bg:#f5f3ed; --card:#fff; --ink:#1f1e1b; --mute:#77736a; --line:#e3dfd4; --accent:#3f6fc2; --accent-ink:#fff; --ok:#2f7a4f; --warn:#b4542a; --soft:#eef2fa; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#191917; --card:#242320; --ink:#eeeae0; --mute:#a09b90; --line:#38362f; --accent:#7ea4e6; --accent-ink:#10131a; --ok:#7fd1a0; --warn:#f0a07a; --soft:#22293a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); }
+  .bar { max-width:980px; margin:0 auto; padding:14px 20px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .bar h1 { font-size:19px; margin:0; letter-spacing:-.02em; }
+  .bar .ver { color:var(--mute); font-size:12px; }
+  .layout { max-width:980px; margin:0 auto; display:grid; grid-template-columns:180px 1fr; gap:24px; padding:20px 20px 120px; }
+  nav { position:sticky; top:76px; align-self:start; display:flex; flex-direction:column; gap:2px; }
+  nav a { color:var(--mute); text-decoration:none; padding:6px 10px; border-radius:8px; font-size:14px; }
+  nav a:hover { background:var(--card); color:var(--ink); }
+  @media (max-width:760px) { .layout { grid-template-columns:1fr; } nav { display:none; } }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:16px; scroll-margin-top:84px; }
+  h2 { font-size:16px; margin:0 0 4px; }
+  .desc { color:var(--mute); font-size:13px; margin:0 0 14px; }
   .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-  .pill { border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:13px; color:var(--mute); }
-  .pill.on { color:var(--accent); border-color:var(--accent); }
+  .grid { display:grid; grid-template-columns:170px 1fr; gap:10px 16px; align-items:center; }
+  .grid > label { color:var(--mute); font-size:14px; }
+  @media (max-width:560px) { .grid { grid-template-columns:1fr; } }
+  .pill { border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:12.5px; color:var(--mute); white-space:nowrap; }
   .pill.ok { color:var(--ok); border-color:var(--ok); }
-  button { font:inherit; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
+  .pill.bad { color:var(--warn); border-color:var(--warn); }
+  button { font:inherit; font-size:14px; padding:6px 12px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--ink); cursor:pointer; }
   button:hover { border-color:var(--accent); color:var(--accent); }
-  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
-  ul { list-style:none; margin:0; padding:0; }
-  li { padding:8px 0; border-top:1px solid var(--line); }
-  li:first-child { border-top:0; }
-  li small { color:var(--mute); display:block; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  button.primary:hover { color:var(--accent-ink); opacity:.9; }
+  button:disabled { opacity:.45; cursor:default; }
+  input[type=text], input[type=password], input[type=number], input[type=url], select, textarea {
+    font:inherit; font-size:14px; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:6px 10px; width:100%; }
+  input[type=number] { width:110px; }
+  textarea { min-height:90px; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; }
+  textarea.big { min-height:320px; }
+  .switch { display:inline-flex; gap:8px; align-items:center; cursor:pointer; user-select:none; }
+  .switch input { width:18px; height:18px; accent-color:var(--accent); }
+  ul.alerts { list-style:none; margin:0 0 12px; padding:0; }
+  ul.alerts li { padding:8px 0; border-top:1px solid var(--line); }
+  ul.alerts li:first-child { border-top:0; }
+  ul.alerts small { color:var(--mute); display:block; }
   .empty { color:var(--mute); }
-  textarea { width:100%; height:340px; font:13px/1.5 ui-monospace, Consolas, monospace; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:10px; }
-  pre { margin:0; font:12px/1.6 ui-monospace, Consolas, monospace; color:var(--mute); white-space:pre-wrap; max-height:220px; overflow:auto; }
-  #msg { color:var(--accent); font-size:13px; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { text-align:left; padding:6px 8px 6px 0; font-size:14px; }
+  th { color:var(--mute); font-weight:500; }
+  details { background:var(--soft); border-radius:10px; padding:10px 14px; margin:8px 0 14px; }
+  details summary { cursor:pointer; font-size:14px; }
+  details ol { margin:8px 0 4px 18px; padding:0; font-size:14px; }
+  details li { margin:4px 0; }
+  pre.log { margin:0; font:12px/1.6 ui-monospace, Menlo, Consolas, monospace; color:var(--mute); white-space:pre-wrap; max-height:260px; overflow:auto; }
+  .hint { color:var(--mute); font-size:12.5px; }
+  .savebar { position:fixed; left:0; right:0; bottom:0; background:var(--card); border-top:1px solid var(--line); transform:translateY(100%); transition:transform .2s; z-index:10; }
+  .savebar.show { transform:none; }
+  .savebar .inner { max-width:980px; margin:0 auto; padding:12px 20px; display:flex; gap:12px; align-items:center; justify-content:flex-end; }
+  #toast { position:fixed; right:20px; bottom:20px; background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:10px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:20; }
+  #toast.show { opacity:1; }
+  .ear { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+  code { font-family:ui-monospace, Menlo, Consolas, monospace; font-size:13px; background:var(--soft); padding:1px 5px; border-radius:5px; }
 </style>
 </head>
 <body>
-<main>
-  <h1>우르부르</h1>
-  <p class="sub">귀가 깜빡이면 알림입니다. 왼발은 열기, 오른발은 듣기, 머리는 끄기.</p>
-
-  <section>
-    <h2>상태</h2>
+<header>
+  <div class="bar">
+    <h1>우르부르</h1>
+    <span class="ver" id="ver"></span>
     <div class="row" id="pills"></div>
-  </section>
+  </div>
+</header>
 
-  <section>
-    <h2>확인하지 않은 알림</h2>
-    <ul id="alerts"><li class="empty">불러오는 중</li></ul>
-  </section>
+<div class="layout">
+  <nav>
+    <a href="#alerts">알림</a>
+    <a href="#ai">AI</a>
+    <a href="#google">Gmail·캘린더</a>
+    <a href="#sites">사이트 감시</a>
+    <a href="#buttons">버튼</a>
+    <a href="#leds">귀 색</a>
+    <a href="#sound">소리·라디오</a>
+    <a href="#general">일반</a>
+    <a href="#advanced">고급</a>
+  </nav>
 
-  <section>
-    <h2>바로 해보기</h2>
-    <div class="row">
-      <button data-cmd="open_latest">최근 알림 열기</button>
-      <button data-cmd="speak_latest">읽어주기</button>
-      <button data-cmd="ack_all">모두 확인</button>
-      <button data-cmd="toggle_dnd">방해 금지</button>
-      <button data-cmd="briefing">브리핑</button>
-      <button data-cmd="pomodoro_toggle">집중 타이머</button>
-      <button data-cmd="radio_toggle">라디오</button>
-      <button data-cmd="radio_next">다음 방송</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <span class="pill">LED 시험</span>
-      <button data-led="left">왼쪽</button>
-      <button data-led="right">오른쪽</button>
-      <button data-led="both">양쪽</button>
-      <button data-led="urgent">급함</button>
-      <button data-led="alarm">경보</button>
-      <button data-led="test">전체</button>
-    </div>
-  </section>
+  <main>
+    <section id="deviceHelp" style="display:none; border-color:var(--warn)">
+      <h2>우르부르가 연결되지 않았습니다</h2>
+      <p class="desc" id="deviceErr"></p>
+      <ol id="deviceSteps" style="margin:0 0 0 18px; padding:0; font-size:14px"></ol>
+      <p class="hint" style="margin-top:10px">꽂으면 몇 초 안에 저절로 다시 연결됩니다. 프로그램을 다시 켤 필요는 없습니다.</p>
+    </section>
 
-  <section>
-    <h2>설정 파일</h2>
-    <textarea id="cfg" spellcheck="false"></textarea>
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="save">저장</button>
-      <span id="msg"></span>
-    </div>
-  </section>
+    <section id="alerts">
+      <h2>확인하지 않은 알림</h2>
+      <p class="desc">귀가 깜빡이는 동안 여기에 남아 있습니다. 머리 버튼을 짧게 누르면 모두 확인합니다.</p>
+      <ul class="alerts" id="alertList"><li class="empty">불러오는 중</li></ul>
+      <div class="row">
+        <button data-cmd="open_latest">최근 알림 열기</button>
+        <button data-cmd="speak_latest">읽어주기</button>
+        <button data-cmd="ack_all">모두 확인</button>
+        <button data-cmd="briefing">브리핑</button>
+        <button data-cmd="toggle_dnd">방해 금지</button>
+        <button data-cmd="pomodoro_toggle">집중 타이머</button>
+        <button id="testNotify">시험 알림 보내기</button>
+      </div>
+    </section>
 
-  <section>
-    <h2>기록</h2>
-    <pre id="log"></pre>
-  </section>
-</main>
+    <section id="ai">
+      <h2>AI</h2>
+      <p class="desc">메일이 급한지 가려내고, 알림을 한두 문장으로 줄여 읽어줍니다. 없어도 프로그램은 동작합니다.</p>
+      <div class="grid">
+        <label for="provider">사용할 AI</label>
+        <select id="provider" data-path="ai|provider">
+          <option value="gemini">Gemini (Google)</option>
+          <option value="claude">Claude (API 키)</option>
+          <option value="claude_cli">Claude (Claude Code 구독 사용)</option>
+          <option value="grok">Grok (xAI)</option>
+          <option value="none">사용 안 함</option>
+        </select>
+      </div>
+      <div id="aiDetail" style="margin-top:12px"></div>
+      <div class="grid" style="margin-top:12px">
+        <label>AI에 보낼 내용</label>
+        <div class="row">
+          <label class="switch"><input type="radio" name="privacy" value="headers" data-path="ai|privacy"> 보낸 사람·제목만</label>
+          <label class="switch"><input type="radio" name="privacy" value="snippet" data-path="ai|privacy"> 본문 미리보기 포함</label>
+        </div>
+        <label for="persona">말투 (보이스 스킨)</label>
+        <input type="text" id="persona" data-path="ai|persona" placeholder="예: 딴지일보 말투로 능청스럽게">
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="aiTest">AI 연결 시험</button>
+        <span class="hint" id="aiTestResult"></span>
+      </div>
+    </section>
+
+    <section id="google">
+      <h2>Gmail · 캘린더</h2>
+      <p class="desc">Google 계정에 읽기 전용으로 연결합니다. 비밀번호는 저장하지 않습니다.</p>
+      <div class="row" id="googleState" style="margin-bottom:10px"></div>
+      <details id="googleGuide">
+        <summary>처음 한 번: OAuth 클라이언트 만들기 (약 10분)</summary>
+        <ol>
+          <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 새 프로젝트를 만듭니다. 이름은 아무거나(예: wurubururu).</li>
+          <li><a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" rel="noopener">Gmail API</a>와 <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noopener">Google Calendar API</a>를 각각 열어 <b>사용</b>을 누릅니다.</li>
+          <li><a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google 인증 플랫폼</a>에서 시작하기 → 앱 이름 입력, 대상은 <b>외부</b>, 연락처에 본인 메일을 넣고 만듭니다.</li>
+          <li><b>대상</b> 메뉴에서 <b>앱 게시</b>를 눌러 게시 상태를 <b>프로덕션</b>으로 바꿉니다. 테스트 상태로 두면 7일마다 다시 로그인해야 합니다. 검증은 신청하지 않아도 됩니다.</li>
+          <li><b>클라이언트</b> 메뉴에서 클라이언트 만들기 → 유형 <b>데스크톱 앱</b> → 만든 뒤 <b>JSON 다운로드</b>.</li>
+          <li>아래 <b>클라이언트 파일 올리기</b>로 그 JSON을 고르고, <b>Google로 로그인</b>을 누릅니다.</li>
+          <li>로그인 화면에 "확인되지 않은 앱"이 나오면 <b>고급 → (앱 이름)(으)로 이동</b>을 누릅니다. 본인이 만든 앱이라 안전합니다.</li>
+        </ol>
+      </details>
+      <div class="row">
+        <label class="switch"><button type="button" id="clientPick">클라이언트 파일 올리기</button></label>
+        <input type="file" id="clientFile" accept="application/json,.json" hidden>
+        <button class="primary" id="googleLogin">Google로 로그인</button>
+        <button id="googleLogout">연결 해제</button>
+        <span class="hint" id="googleMsg"></span>
+      </div>
+      <div class="grid" style="margin-top:16px">
+        <label>Gmail 새 메일 알림</label>
+        <label class="switch"><input type="checkbox" data-path="gmail|enabled"> 켜기</label>
+        <label>메일 확인 간격</label>
+        <div class="row"><input type="number" min="15" data-path="gmail|interval"> 초</div>
+        <label>확인할 메일</label>
+        <input type="text" data-path="gmail|query" title="Gmail 검색어 문법">
+        <label>캘린더 일정 알림</label>
+        <label class="switch"><input type="checkbox" data-path="calendar|enabled"> 켜기</label>
+        <label>미리 알림</label>
+        <div class="row">시작 <input type="number" min="1" data-path="calendar|lead_minutes"> 분 전</div>
+      </div>
+    </section>
+
+    <section id="sites">
+      <h2>사이트 감시</h2>
+      <p class="desc">주소가 연속으로 응답하지 않으면 빨간 귀가 좌우로 깜빡이며 알리고, 복구되면 스스로 꺼집니다.</p>
+      <div class="grid">
+        <label>감시</label>
+        <label class="switch"><input type="checkbox" data-path="sitewatch|enabled"> 켜기</label>
+        <label>주소 (한 줄에 하나)</label>
+        <textarea data-path="sitewatch|urls" data-kind="lines" placeholder="https://example.com"></textarea>
+        <label>확인 간격</label>
+        <div class="row"><input type="number" min="30" data-path="sitewatch|interval"> 초</div>
+        <label>알릴 기준</label>
+        <div class="row"><input type="number" min="1" data-path="sitewatch|fail_threshold"> 번 연속 실패하면</div>
+      </div>
+    </section>
+
+    <section id="buttons">
+      <h2>버튼</h2>
+      <p class="desc">버튼 3개를 짧게, 길게, 두 번 눌러 9가지 동작을 씁니다.</p>
+      <table>
+        <thead><tr><th></th><th>짧게</th><th>길게</th><th>두 번</th></tr></thead>
+        <tbody id="buttonTable"></tbody>
+      </table>
+      <div class="grid" style="margin-top:14px">
+        <label>길게 누름 기준</label>
+        <div class="row"><input type="number" min="300" step="50" data-path="device|buttons|long_ms"> ms</div>
+        <label>두 번 누름 간격</label>
+        <div class="row"><input type="number" min="150" step="50" data-path="device|buttons|double_ms"> ms</div>
+        <label>접촉 끊김 무시</label>
+        <div class="row"><input type="number" min="20" step="20" data-path="device|buttons|release_ms"> ms <span class="hint">버튼이 오작동하면 늘리세요</span></div>
+      </div>
+    </section>
+
+    <section id="leds">
+      <h2>귀 색</h2>
+      <p class="desc"><span class="ear" style="background:#3cb46e"></span>초록은 보통, <span class="ear" style="background:#e0602c"></span>빨강은 급함. 귀 하나에 한 색씩만 켜집니다.</p>
+      <table><tbody id="patternTable"></tbody></table>
+    </section>
+
+    <section id="sound">
+      <h2>소리 · 라디오</h2>
+      <div class="grid">
+        <label>읽어주기</label>
+        <label class="switch"><input type="checkbox" data-path="speech|enabled"> 켜기</label>
+        <label class="mac-only">목소리</label>
+        <input class="mac-only" type="text" data-path="speech|voice" placeholder="비워 두면 기본 (예: Yuna)">
+        <label class="mac-only">알림 음성만 보낼 장치</label>
+        <input class="mac-only" type="text" data-path="speech|audio_device" placeholder="비워 두면 기본 출력 장치">
+        <label>켤 때 인트로</label>
+        <label class="switch"><input type="checkbox" data-path="intro|enabled"> 용팔이 「긍정주의자」 도입부 재생</label>
+        <label>라디오 방송 (한 줄에 하나)</label>
+        <textarea data-path="radio|stations" data-kind="stations" placeholder="방송 이름 | https://스트림주소"></textarea>
+        <label>재생기</label>
+        <input type="text" data-path="radio|player" placeholder="비워 두면 mpv, ffplay, VLC 순으로 자동 탐색">
+      </div>
+    </section>
+
+    <section id="general">
+      <h2>일반</h2>
+      <div class="grid">
+        <label>로그인 시 자동 실행</label>
+        <label class="switch"><input type="checkbox" id="autostart"> 켜기 <span class="hint" id="autostartHint"></span></label>
+        <label>방해 금지 시간</label>
+        <div class="row"><input type="number" min="5" data-path="dnd|minutes"> 분</div>
+        <label>집중 / 휴식</label>
+        <div class="row"><input type="number" min="1" data-path="pomodoro|work_minutes"> 분 집중, <input type="number" min="1" data-path="pomodoro|break_minutes"> 분 휴식</div>
+      </div>
+      <p class="hint" style="margin-top:14px">다른 프로그램에서 알림 보내기: <code>wurubururu notify "빌드 끝"</code> 또는 <code>POST http://127.0.0.1:8737/api/notify</code></p>
+    </section>
+
+    <section id="advanced">
+      <h2>고급</h2>
+      <details>
+        <summary>설정 파일 직접 편집</summary>
+        <p class="hint">기본값과 다른 항목만 들어 있습니다. 전체 항목은 저장소의 config.example.toml 참고.</p>
+        <textarea class="big" id="rawCfg" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:8px"><button id="rawSave">파일 저장</button></div>
+      </details>
+      <details open>
+        <summary>기록</summary>
+        <pre class="log" id="log"></pre>
+      </details>
+    </section>
+  </main>
+</div>
+
+<div class="savebar" id="savebar"><div class="inner">
+  <span class="hint">바꾼 설정이 있습니다</span>
+  <button id="revert">되돌리기</button>
+  <button class="primary" id="save">저장하고 적용</button>
+</div></div>
+<div id="toast"></div>
+
 <script>
 const TOKEN = "__TOKEN__";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-async function post(path, body) {
-  const r = await fetch(path, { method:"POST", headers:{ "Content-Type":"application/json", "X-Wuruburu-Token":TOKEN }, body:JSON.stringify(body) });
-  return r.json();
+const COMMANDS = {
+  open_latest:"최근 알림 열기", speak_latest:"요약 읽어주기", ack_all:"모두 확인 (LED 끔)",
+  toggle_dnd:"방해 금지", briefing:"브리핑", radio_toggle:"라디오 켜기/끄기", radio_next:"다음 방송",
+  pomodoro_toggle:"집중 타이머", none:"아무것도 안 함" };
+const BUTTONS = [["left","왼발"],["right","오른발"],["mute","머리 (mute)"]];
+const GESTURES = ["click","long","double"];
+const EVENTS = [["mail.normal","보통 메일"],["mail.urgent","급한 메일"],["calendar.normal","일정 미리 알림"],
+  ["calendar.urgent","일정 시작"],["site.urgent","사이트 장애"],["notify.normal","외부 알림"],
+  ["notify.urgent","급한 외부 알림"],["pomodoro.normal","집중 끝"],["focus","집중하는 동안"]];
+const PATTERN_NAMES = { green_left:"왼쪽 초록 깜빡", green_right:"오른쪽 초록 깜빡", pulse:"양쪽 초록 짧게",
+  red_left:"왼쪽 빨강 깜빡", red_right:"오른쪽 빨강 깜빡", urgent:"양쪽 빨강 빠르게", alarm:"빨강 좌우 번갈아",
+  solid_left:"왼쪽 초록 켜 둠", solid_right:"오른쪽 초록 켜 둠", left:"왼쪽 빨강↔초록 (원본)",
+  right:"오른쪽 초록↔빨강 (원본)", both:"양쪽 엇갈림 (원본)", test:"시험 패턴", off:"끔" };
+const AI_INFO = {
+  gemini:{ key:"ai.gemini", link:"https://aistudio.google.com/apikey", note:"Google AI Studio에서 무료로 발급할 수 있습니다." },
+  claude:{ key:"ai.claude", link:"https://platform.claude.com/settings/keys", note:"Claude Console에서 발급합니다. Claude Pro 구독과 별도로 사용한 만큼 과금됩니다." },
+  grok:{ key:"ai.grok", link:"https://console.x.ai", note:"xAI 콘솔에서 발급합니다." },
+  claude_cli:{ note:"이 컴퓨터에 Claude Code가 설치·로그인돼 있으면 Claude 구독(Pro 등) 사용량으로 동작합니다. 키가 필요 없습니다." },
+  none:{ note:"모든 메일을 보통 알림으로 처리하고, 읽어주기는 제목을 그대로 읽습니다." },
+};
+
+let S = null;          // 서버에서 받은 설정 묶음
+let draft = null;      // 화면에서 고치는 중인 설정
+let dirty = false;
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : { method:"POST",
+    headers:{ "Content-Type":"application/json", "X-Wurubururu-Token":TOKEN }, body:JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
 }
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600); }
+function getPath(obj, path) { return path.split("|").reduce((o, k) => (o == null ? undefined : o[k]), obj); }
+function setPath(obj, path, v) { const ks = path.split("|"); let o = obj; ks.slice(0, -1).forEach(k => { if (typeof o[k] !== "object" || o[k] === null) o[k] = {}; o = o[k]; }); o[ks.at(-1)] = v; }
+function markDirty() { dirty = true; $("savebar").classList.add("show"); }
+
+function bindFields() {
+  document.querySelectorAll("[data-path]").forEach(el => {
+    const path = el.dataset.path, kind = el.dataset.kind, v = getPath(draft, path);
+    if (el.type === "checkbox") el.checked = !!v;
+    else if (el.type === "radio") el.checked = (v === el.value);
+    else if (kind === "lines") el.value = (v || []).join("\n");
+    else if (kind === "stations") el.value = (v || []).map(s => `${s.name || ""} | ${s.url || ""}`).join("\n");
+    else el.value = v ?? "";
+    if (el._bound) return;
+    el._bound = true;
+    el.addEventListener("input", () => { readField(el); markDirty(); if (path === "ai|provider") renderAI(); });
+    el.addEventListener("change", () => { readField(el); markDirty(); if (path === "ai|provider") renderAI(); });
+  });
+}
+function readField(el) {
+  const path = el.dataset.path, kind = el.dataset.kind;
+  let v;
+  if (el.type === "checkbox") v = el.checked;
+  else if (el.type === "radio") { if (!el.checked) return; v = el.value; }
+  else if (el.type === "number") v = el.value === "" ? 0 : Number(el.value);
+  else if (kind === "lines") v = el.value.split("\n").map(s => s.trim()).filter(Boolean);
+  else if (kind === "stations") v = el.value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.lastIndexOf("|"); return i < 0 ? { name:l, url:l } : { name:l.slice(0, i).trim(), url:l.slice(i + 1).trim() }; });
+  else v = el.value;
+  setPath(draft, path, v);
+}
+
+function renderAI() {
+  const p = draft.ai.provider, info = AI_INFO[p] || {};
+  let h = `<p class="hint">${esc(info.note || "")}</p>`;
+  if (info.key) {
+    const saved = S.secrets[info.key];
+    h += `<div class="grid">
+      <label>API 키</label>
+      <div class="row"><input type="password" id="keyInput" placeholder="${saved ? "저장됨 — 바꾸려면 새 키 입력" : "키를 붙여넣으세요"}" autocomplete="off" style="flex:1;min-width:220px">
+        <button id="keySave">키 저장</button>${saved ? '<button id="keyDel">키 삭제</button>' : ""}
+        <a class="hint" href="${info.link}" target="_blank" rel="noopener">키 발급 ↗</a></div>
+      <label>모델</label>
+      <input type="text" data-path="ai|${p}|model">
+    </div>
+    <p class="hint">키는 설정 파일이 아니라 ${S.platform === "darwin" ? "macOS 키체인" : S.platform === "win32" ? "Windows 자격 증명 관리자" : "보안 저장소"}에 저장됩니다.</p>`;
+  }
+  $("aiDetail").innerHTML = h;
+  if (info.key) {
+    $("keySave").onclick = async () => {
+      const v = $("keyInput").value.trim(); if (!v) return toast("키를 입력하세요");
+      try { await api("/api/secret", { name:info.key, value:v }); toast("키를 저장했습니다"); await load(); } catch (e) { toast("저장 실패: " + e.message); }
+    };
+    if ($("keyDel")) $("keyDel").onclick = async () => { await api("/api/secret", { name:info.key, value:"" }); toast("키를 삭제했습니다"); await load(); };
+  }
+  bindFields();
+}
+
+function renderButtons() {
+  $("buttonTable").innerHTML = BUTTONS.map(([b, label]) => `<tr><th>${label}</th>${GESTURES.map(g =>
+    `<td><select data-path="buttons|${b}.${g}">${Object.entries(COMMANDS).map(([c, n]) => `<option value="${c}">${n}</option>`).join("")}</select></td>`).join("")}</tr>`).join("");
+}
+function renderPatterns() {
+  const opts = S.patterns.filter(p => p !== "test").map(p => `<option value="${p}">${esc(PATTERN_NAMES[p] || p)}</option>`).join("");
+  $("patternTable").innerHTML = EVENTS.map(([k, label]) => `<tr><th style="width:170px">${label}</th>
+    <td><select data-path="patterns|${k}">${opts}</select></td><td style="width:70px"><button data-try="${k}">시험</button></td></tr>`).join("");
+  document.querySelectorAll("[data-try]").forEach(b => b.onclick = () => {
+    const v = getPath(draft, "patterns|" + b.dataset.try);
+    if (typeof v === "string") api("/api/led", { pattern:v, repeat:3 }); else toast("직접 지정한 패턴은 저장 후 시험할 수 있습니다");
+  });
+}
+function renderGoogle() {
+  const g = S.google, pills = [];
+  pills.push(`<span class="pill ${g.client_secret ? "ok" : "bad"}">클라이언트 파일 ${g.client_secret ? "있음" : "없음"}</span>`);
+  pills.push(`<span class="pill ${g.logged_in ? "ok" : "bad"}">${g.logged_in ? "Google 연결됨" : "로그인 필요"}</span>`);
+  if (g.login_running) pills.push(`<span class="pill">브라우저에서 로그인 진행 중…</span>`);
+  if (g.error) pills.push(`<span class="pill bad">${esc(g.error)}</span>`);
+  $("googleState").innerHTML = pills.join("");
+  $("googleLogin").disabled = !g.client_secret || g.login_running;
+  $("googleLogout").disabled = !g.logged_in;
+  $("googleGuide").open = !g.client_secret;
+}
+function renderGeneral() {
+  const a = S.autostart;
+  $("autostart").checked = a.enabled; $("autostart").disabled = !a.supported;
+  $("autostartHint").textContent = a.supported ? "" : "이 운영체제에서는 지원하지 않습니다";
+  document.querySelectorAll(".mac-only").forEach(el => el.style.display = S.platform === "darwin" ? "" : "none");
+}
+
+async function load() {
+  S = await api("/api/settings");
+  draft = structuredClone(S.cfg); dirty = false; $("savebar").classList.remove("show");
+  $("ver").textContent = "v" + S.version;
+  renderButtons(); renderPatterns(); renderAI(); renderGoogle(); renderGeneral(); bindFields();
+  api("/api/config").then(d => $("rawCfg").value = d.text);
+}
+
 async function refresh() {
   try {
-    const s = await (await fetch("/api/status")).json();
+    const s = await api("/api/status"), d = s.device;
     const pills = [
-      `<span class="pill ${s.device_error ? "on" : "ok"}">${s.device_error ? "기기 오류: " + esc(s.device_error) : "기기 연결됨"}</span>`,
+      `<span class="pill ${d.connected ? "ok" : "bad"}">${d.mock ? "가짜 장치" : d.connected ? "우르부르 연결됨" : "우르부르 연결 안 됨"}</span>`,
       `<span class="pill">AI: ${esc(s.provider)}</span>`,
-      s.dnd ? `<span class="pill on">방해 금지</span>` : "",
-      s.focus ? `<span class="pill on">집중 중</span>` : "",
-      s.radio ? `<span class="pill on">라디오: ${esc(s.radio)}</span>` : "",
-      ...s.sources.map(x => `<span class="pill ${x.error ? "on" : "ok"}">${esc(x.name)}${x.error ? ": " + esc(x.error) : ""}</span>`),
+      s.dnd ? `<span class="pill bad">방해 금지</span>` : "",
+      s.focus ? `<span class="pill ok">집중 중</span>` : "",
+      s.radio ? `<span class="pill ok">라디오: ${esc(s.radio)}</span>` : "",
+      ...s.sources.map(x => `<span class="pill ${x.error ? "bad" : "ok"}" title="${esc(x.error || "")}">${esc({gmail:"Gmail",calendar:"캘린더",sitewatch:"사이트 감시"}[x.name] || x.name)}${x.error ? " 오류" : ""}</span>`),
     ];
     $("pills").innerHTML = pills.join("");
-    $("alerts").innerHTML = s.alerts.length
-      ? s.alerts.slice().reverse().map(a => `<li>${esc(a.title)}<small>${esc(a.kind)} · ${esc(a.priority)}${a.summary ? " · " + esc(a.summary) : ""}</small></li>`).join("")
+    const help = !d.connected && !d.mock;
+    $("deviceHelp").style.display = help ? "" : "none";
+    if (help) {
+      $("deviceErr").textContent = d.error || "";
+      const win = S && S.platform === "win32";
+      $("deviceSteps").innerHTML = (win ? [
+        "USB 케이블이 꽂혀 있는지 확인합니다.",
+        '처음 한 번 <a href="https://zadig.akeo.ie" target="_blank" rel="noopener">Zadig</a>를 실행 → Options → List All Devices → 우르부르의 <b>인터페이스 2 (MI_02)</b>를 골라 <b>WinUSB</b>를 설치합니다.',
+        "오디오 인터페이스(MI_00, MI_01)는 건드리지 않습니다. 스피커는 그대로 동작합니다.",
+      ] : [
+        "USB 케이블이 꽂혀 있는지 확인합니다. USB 허브보다 컴퓨터에 직접 꽂는 편이 안정적입니다.",
+        "맥이 '액세서리 연결을 허용하시겠습니까?'라고 물으면 허용합니다.",
+        "시스템 설정 → 사운드 → 출력 목록에 우르부르가 보이는지 확인합니다. 안 보이면 케이블이나 포트 문제입니다.",
+      ]).map(x => `<li>${x}</li>`).join("");
+    }
+    $("alertList").innerHTML = s.alerts.length
+      ? s.alerts.slice().reverse().map(a => `<li>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.title)}</a>` : esc(a.title)}
+          <small>${esc({mail:"메일",calendar:"일정",site:"사이트",notify:"외부 알림",pomodoro:"집중 타이머"}[a.kind] || a.kind)} · ${a.priority === "urgent" ? "급함" : "보통"}${a.summary ? " · " + esc(a.summary) : ""}</small></li>`).join("")
       : `<li class="empty">없음</li>`;
     $("log").textContent = s.log.slice().reverse().join("\n");
-  } catch (e) { $("pills").innerHTML = `<span class="pill on">프로그램에 연결할 수 없음</span>`; }
+    if (S && S.google.login_running) { const g = await api("/api/settings"); S.google = g.google; S.secrets = g.secrets; renderGoogle(); }
+  } catch (e) { $("pills").innerHTML = `<span class="pill bad">프로그램에 연결할 수 없음</span>`; }
 }
-document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => post("/api/command", { command:b.dataset.cmd }).then(refresh));
-document.querySelectorAll("[data-led]").forEach(b => b.onclick = () => post("/api/led", { pattern:b.dataset.led }));
+
+document.querySelectorAll("[data-cmd]").forEach(b => b.onclick = () => api("/api/command", { command:b.dataset.cmd }).then(refresh));
+$("testNotify").onclick = () => api("/api/notify", { title:"시험 알림입니다" }).then(() => { toast("귀가 깜빡이는지 보세요"); refresh(); });
 $("save").onclick = async () => {
-  const r = await post("/api/config", { text:$("cfg").value });
-  $("msg").textContent = r.ok ? "저장했습니다. 프로그램을 다시 시작하면 적용됩니다." : "저장 실패: " + (r.error || "");
+  try { await api("/api/settings", { cfg:draft }); toast("저장하고 적용했습니다"); await load(); refresh(); }
+  catch (e) { toast("저장 실패: " + e.message); }
 };
-fetch("/api/config").then(r => r.json()).then(d => $("cfg").value = d.text);
-refresh(); setInterval(refresh, 3000);
+$("revert").onclick = () => load();
+$("rawSave").onclick = async () => {
+  try { await api("/api/config", { text:$("rawCfg").value }); toast("파일을 저장하고 적용했습니다"); await load(); }
+  catch (e) { toast("저장 실패: " + e.message); }
+};
+$("autostart").onchange = async e => {
+  try { const r = await api("/api/autostart", { enabled:e.target.checked }); toast(r.enabled ? "로그인할 때 자동으로 켜집니다" : "자동 실행을 껐습니다"); }
+  catch (err) { toast("실패: " + err.message); e.target.checked = !e.target.checked; }
+};
+$("aiTest").onclick = async () => {
+  if (dirty) return toast("먼저 설정을 저장하세요");
+  $("aiTestResult").textContent = "AI에 묻는 중…";
+  try { const r = await api("/api/ai/test", {}); $("aiTestResult").textContent = "응답: " + r.text; }
+  catch (e) { $("aiTestResult").textContent = "실패: " + e.message; }
+};
+$("clientPick").onclick = () => $("clientFile").click();
+$("clientFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { await api("/api/google/client", { text:await f.text() }); toast("클라이언트 파일을 저장했습니다. 이제 로그인하세요"); await load(); }
+  catch (err) { $("googleMsg").textContent = err.message; }
+  e.target.value = "";
+};
+$("googleLogin").onclick = async () => {
+  try { await api("/api/google/login", {}); $("googleMsg").textContent = "브라우저에서 로그인을 마쳐 주세요"; S.google.login_running = true; renderGoogle(); }
+  catch (e) { $("googleMsg").textContent = e.message; }
+};
+$("googleLogout").onclick = async () => { await api("/api/google/logout", {}); toast("Google 연결을 해제했습니다"); await load(); };
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+load().then(refresh); setInterval(refresh, 3000);
 </script>
 </body>
 </html>

@@ -26,7 +26,11 @@ def _merge(base: dict, over: dict) -> dict:
 def ensure_home() -> None:
     HOME.mkdir(parents=True, exist_ok=True)
     if not CONFIG_PATH.exists():
-        CONFIG_PATH.write_text(default_text(), encoding="utf-8")
+        CONFIG_PATH.write_text(HEADER, encoding="utf-8")
+
+
+def is_first_run() -> bool:
+    return not CONFIG_PATH.exists()
 
 
 def load(path: Path | None = None) -> dict:
@@ -35,6 +39,24 @@ def load(path: Path | None = None) -> dict:
     if path.exists():
         return _merge(base, tomllib.loads(path.read_text(encoding="utf-8")))
     return base
+
+
+HEADER = """# wurubururu 설정 — 설정 화면에서 저장하면 기본값과 다른 항목만 이 파일에 남습니다.
+# 기본값 전체는 config.example.toml 참고. API 키는 이 파일이 아니라 키체인에 저장됩니다.
+"""
+
+
+def defaults() -> dict:
+    return tomllib.loads(default_text())
+
+
+def save_dict(cfg: dict) -> None:
+    """설정 전체(dict)를 받아 기본값과 다른 부분만 저장한다."""
+    from .tomlwrite import diff, dumps
+    text = dumps(diff(cfg, defaults()), header=HEADER)
+    tomllib.loads(text)  # 다시 읽을 수 있는지 확인
+    HOME.mkdir(parents=True, exist_ok=True)
+    CONFIG_PATH.write_text(text, encoding="utf-8")
 
 
 def save_text(text: str) -> None:

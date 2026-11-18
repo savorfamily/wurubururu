@@ -94,10 +94,16 @@ def parse_triage(text: str) -> dict:
     return {"priority": priority, "summary": str(data.get("summary", ""))[:200]}
 
 
-def _key(cfg: dict, env: str) -> str:
-    key = cfg.get("api_key") or os.environ.get(env, "")
+KEY_ENV = {"gemini": "GEMINI_API_KEY", "claude": "ANTHROPIC_API_KEY", "grok": "XAI_API_KEY"}
+
+
+def _key(cfg: dict, provider: str) -> str:
+    """API 키를 찾는다. 순서: 설정 화면에서 저장한 키(키체인) → 설정 파일 → 환경변수."""
+    from . import keystore
+    env = KEY_ENV[provider]
+    key = keystore.get(f"ai.{provider}") or cfg.get("api_key") or os.environ.get(env, "")
     if not key:
-        raise AIError(f"API 키가 없습니다 (설정 파일 또는 환경변수 {env})")
+        raise AIError(f"API 키가 없습니다 (설정 화면 → AI에서 입력, 또는 환경변수 {env})")
     return key
 
 
@@ -108,7 +114,7 @@ class Gemini(Provider):
         model = self.cfg.get("model", "gemini-3.5-flash-lite")
         data = _post_json(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-            {"x-goog-api-key": _key(self.cfg, "GEMINI_API_KEY")},
+            {"x-goog-api-key": _key(self.cfg, "gemini")},
             {"systemInstruction": {"parts": [{"text": system}]},
              "contents": [{"role": "user", "parts": [{"text": prompt}]}]},
         )
@@ -125,7 +131,7 @@ class Claude(Provider):
     def complete(self, system, prompt):
         data = _post_json(
             "https://api.anthropic.com/v1/messages",
-            {"x-api-key": _key(self.cfg, "ANTHROPIC_API_KEY"), "anthropic-version": "2023-06-01"},
+            {"x-api-key": _key(self.cfg, "claude"), "anthropic-version": "2023-06-01"},
             {"model": self.cfg.get("model", "claude-haiku-5-5"), "max_tokens": 600,
              "system": system, "messages": [{"role": "user", "content": prompt}]},
         )
@@ -141,7 +147,7 @@ class Grok(Provider):
     def complete(self, system, prompt):
         data = _post_json(
             "https://api.x.ai/v1/chat/completions",
-            {"Authorization": f"Bearer {_key(self.cfg, 'XAI_API_KEY')}"},
+            {"Authorization": f"Bearer {_key(self.cfg, 'grok')}"},
             {"model": self.cfg.get("model", "grok-4.7"), "stream": False,
              "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]},
         )
@@ -151,14 +157,29 @@ class Grok(Provider):
             raise AIError(f"Grok 응답 형식 오류: {str(data)[:200]}") from e
 
 
+def find_command(name: str) -> str | None:
+    """PATH와 흔한 설치 위치에서 실행 파일을 찾는다 (앱으로 실행되면 PATH가 짧다)."""
+    from pathlib import Path
+    found = shutil.which(name)
+    if found:
+        return found
+    home = Path.home()
+    for d in (home / ".claude" / "local", home / ".local" / "bin", home / ".npm-global" / "bin",
+              Path("/opt/homebrew/bin"), Path("/usr/local/bin"), home / "AppData" / "Roaming" / "npm"):
+        for cand in (d / name, d / f"{name}.cmd", d / f"{name}.exe"):
+            if cand.exists():
+                return str(cand)
+    return None
+
+
 class ClaudeCli(Provider):
     """설치된 Claude Code를 불러 쓴다. Claude 구독(Pro 등)으로 로그인돼 있으면 그 사용량으로 동작."""
     name = "claude_cli"
 
     def complete(self, system, prompt):
-        cmd = self.cfg.get("command", "claude")
-        if not shutil.which(cmd):
-            raise AIError(f"'{cmd}' 명령을 찾지 못했습니다 (Claude Code 설치 필요)")
+        cmd = find_command(self.cfg.get("command", "claude"))
+        if not cmd:
+            raise AIError("Claude Code를 찾지 못했습니다 (설치 후 터미널에서 claude 로그인 필요)")
         try:
             r = subprocess.run([cmd, "-p", f"{system}\n\n{prompt}"], capture_output=True,
                                text=True, timeout=120, encoding="utf-8")

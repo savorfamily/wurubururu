@@ -24,13 +24,20 @@ _LIBUSB_CANDIDATES = (
 
 
 def _libusb_backend():
-    """libusb 백엔드를 찾는다. 못 찾으면 None을 돌려 pyusb 기본 탐색에 맡긴다."""
+    """libusb 백엔드를 찾는다. 순서: 함께 설치된 libusb-package → 시스템 → Homebrew 경로."""
     import os
     import sys
     try:
         import usb.backend.libusb1 as libusb1
     except ImportError:  # pragma: no cover
         return None
+    try:
+        import libusb_package  # 맥·윈도우용 libusb를 품고 있는 패키지 (앱 빌드에 동봉)
+        backend = libusb_package.get_libusb1_backend()
+        if backend is not None:
+            return backend
+    except Exception:
+        pass
     backend = libusb1.get_backend()
     if backend is not None or sys.platform != "darwin":
         return backend
@@ -111,7 +118,8 @@ class UsbDevice(Device):
 
     def close(self) -> None:
         try:
-            self._usb.util.dispose_resources(self._dev)  # type: ignore[attr-defined]
+            import usb.util
+            usb.util.dispose_resources(self._dev)
         except Exception:
             pass
 
@@ -139,6 +147,82 @@ class MockDevice(Device):
 
     def read_buttons(self) -> int:
         return self.buttons
+
+
+class AutoDevice(Device):
+    """기기를 뽑았다 다시 꽂아도 알아서 다시 연결하는 장치.
+    연결이 없을 때 읽기·쓰기는 DeviceError를 내고, 몇 초마다 다시 찾아본다."""
+
+    def __init__(self, factory=None, retry: float = 3.0):
+        self._factory = factory or UsbDevice
+        self._retry = retry
+        self._dev: Device | None = None
+        self._next_try = 0.0
+        self._lock = threading.Lock()
+        self.last_error: str | None = None
+
+    @property
+    def connected(self) -> bool:
+        return self._dev is not None
+
+    def _get(self) -> Device:
+        import time
+        with self._lock:
+            if self._dev is not None:
+                return self._dev
+            if time.monotonic() < self._next_try:
+                raise DeviceError(self.last_error or "우르부르가 연결되어 있지 않습니다")
+            self._next_try = time.monotonic() + self._retry
+            try:
+                dev = self._factory()
+                dev.init()
+            except DeviceError as e:
+                self.last_error = str(e)
+                raise
+            self._dev, self.last_error = dev, None
+            return dev
+
+    def _drop(self, e: DeviceError) -> None:
+        with self._lock:
+            if self._dev is not None:
+                try:
+                    self._dev.close()
+                except Exception:
+                    pass
+            self._dev = None
+            self.last_error = str(e)
+
+    def init(self) -> None:
+        try:
+            self._get()
+        except DeviceError:
+            pass   # 나중에 꽂으면 그때 초기화한다
+
+    def write_leds(self, mask: int) -> None:
+        dev = self._get()
+        try:
+            dev.write_leds(mask)
+        except DeviceError as e:
+            self._drop(e)
+            raise
+
+    def read_buttons(self) -> int:
+        dev = self._get()
+        try:
+            return dev.read_buttons()
+        except DeviceError as e:
+            self._drop(e)
+            raise
+
+    def describe(self) -> str:
+        dev = self._get()
+        return dev.describe() if hasattr(dev, "describe") else ""
+
+    def close(self) -> None:
+        with self._lock:
+            if self._dev is not None:
+                self._dev.close()
+            self._dev = None
 
 
 def open_device(mock: bool = False, verbose: bool = False) -> Device:

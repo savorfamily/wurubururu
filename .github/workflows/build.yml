@@ -1,0 +1,110 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  mac:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-15, arch: apple-silicon }
+          - { os: macos-15-intel, arch: intel }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 설치
+        run: pip install ".[all]" pyinstaller
+      - name: 아이콘
+        run: python packaging/make_icons.py
+      - name: 앱 빌드
+        run: pyinstaller --noconfirm --clean packaging/wurubururu.spec
+      - name: 빌드 점검
+        run: dist/wurubururu.app/Contents/MacOS/wurubururu selftest
+      - name: dmg 만들기
+        run: |
+          VER=$(python -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"',open('src/wurubururu/__init__.py').read()).group(1))")
+          mkdir dmg
+          cp -R dist/wurubururu.app dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "wurubururu" -srcfolder dmg -ov -format UDZO "wurubururu-${VER}-mac-${{ matrix.arch }}.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.arch }}
+          path: "*.dmg"
+
+  windows:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 설치
+        run: pip install ".[all]" pyinstaller
+      - name: 아이콘
+        run: python packaging/make_icons.py
+      - name: 앱 빌드
+        run: pyinstaller --noconfirm --clean packaging/wurubururu.spec
+      - name: 빌드 점검
+        shell: pwsh
+        run: |
+          $env:WURUBURURU_HOME = "$env:RUNNER_TEMP\wuru"
+          $p = Start-Process -FilePath "dist\wurubururu\wurubururu.exe" -ArgumentList "selftest" -Wait -PassThru
+          Get-Content "$env:WURUBURURU_HOME\wurubururu.log"
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: 설치 파일 만들기
+        shell: pwsh
+        run: |
+          $ver = (Select-String -Path src\wurubururu\__init__.py -Pattern '__version__ = "([^"]+)"').Matches[0].Groups[1].Value
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$ver" packaging\wurubururu.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*-windows-setup.exe
+
+  release:
+    needs: [mac, windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: 릴리스 게시
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la out
+          gh release create "${GITHUB_REF_NAME}" out/* --title "우르부르 ${GITHUB_REF_NAME}" --notes-file packaging/RELEASE_NOTES.md

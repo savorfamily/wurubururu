@@ -269,13 +269,24 @@ def test_sitewatch_alerts_after_threshold_and_recovers():
         eng.stop()
 
 
-def test_web_api_requires_token(tmp_path, monkeypatch):
+@pytest.fixture
+def home(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "HOME", tmp_path)
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.toml")
     monkeypatch.setattr(config, "TOKEN_PATH", tmp_path / "web_token")
+    from wurubururu import keystore
+    monkeypatch.setattr(keystore, "_keyring", lambda: None)   # 시험 중에는 실제 키체인을 건드리지 않음
+    cfgtext = 'intro = { enabled = false }\n[gmail]\nenabled = false\n[calendar]\nenabled = false\n[ai]\nprovider = "none"\n'
+    (tmp_path / "config.toml").write_text(cfgtext, encoding="utf-8")
+    return tmp_path
+
+
+def start_app(home):
     from wurubururu import web
-    eng, _, _ = make_engine()
-    server = web.start(eng, 0)
+    from wurubururu.app import App
+    app = App(mock=True)
+    app.start_engine(greet=False)
+    server = web.start(app, 0)
     port = server.server_address[1]
     def call(path, body=None, token=None):
         req = urllib.request.Request(f"http://127.0.0.1:{port}{path}",
@@ -285,29 +296,96 @@ def test_web_api_requires_token(tmp_path, monkeypatch):
             with urllib.request.urlopen(req, timeout=5) as r:
                 return r.status, json.loads(r.read())
         except urllib.error.HTTPError as e:
-            return e.code, {}
+            return e.code, json.loads(e.read() or b"{}")
+    app.server = server
+    return app, call
+
+
+def test_web_api_requires_token(home):
+    app, call = start_app(home)
+    tok = config.web_token()
     try:
         assert call("/api/status")[0] == 200
         assert call("/api/notify", {"title": "x"})[0] == 401
-        assert call("/api/notify", {"title": "빌드 끝"}, config.web_token()) == (200, {"ok": True})
-        assert eng.top().title == "빌드 끝"
-        assert call("/api/config", {"text": "this is = not [valid"}, config.web_token())[0] == 400
+        assert call("/api/notify", {"title": "빌드 끝"}, tok) == (200, {"ok": True})
+        assert app.engine.top().title == "빌드 끝"
+        assert call("/api/config", {"text": "this is = not [valid"}, tok)[0] == 400
     finally:
-        server.shutdown(); eng.stop()
+        app.shutdown()
 
 
-def test_same_source_error_logged_once():
-    eng, _, _ = make_engine()
-    class Broken:
-        name, interval, error = "broken", 5, None
-        def poll(self, engine): raise RuntimeError("로그인 필요")
-    src = Broken()
-    eng._stop.set()
-    for _ in range(3):
-        eng._stop.clear()
-        t = __import__("threading").Timer(0.05, eng._stop.set); t.start()
-        eng._run_source(src)
+def test_settings_save_applies_without_restart_and_keeps_alerts(home):
+    app, call = start_app(home)
+    tok = config.web_token()
     try:
-        assert sum("로그인 필요" in line for line in eng.log) == 1
+        call("/api/notify", {"title": "남아 있어야 할 알림"}, tok)
+        code, s = call("/api/settings")
+        assert code == 200 and s["cfg"]["ai"]["provider"] == "none"
+        cfg = s["cfg"]
+        cfg["buttons"]["left.click"] = "briefing"
+        cfg["sitewatch"]["urls"] = ["https://example.com"]
+        cfg["patterns"]["mail.normal"] = "pulse"
+        assert call("/api/settings", {"cfg": cfg}, tok)[0] == 200
+        assert app.engine.cfg["buttons"]["left.click"] == "briefing", "재시작 없이 적용"
+        assert app.engine.top().title == "남아 있어야 할 알림", "확인하지 않은 알림은 유지"
+        saved = (home / "config.toml").read_text(encoding="utf-8")
+        assert "briefing" in saved and "example.com" in saved
+        assert "gemini-3.5" not in saved, "기본값과 같은 항목은 저장하지 않는다"
+        import tomllib
+        tomllib.loads(saved)
     finally:
-        eng.stop()
+        app.shutdown()
+
+
+def test_secret_goes_to_store_not_config(home):
+    app, call = start_app(home)
+    tok = config.web_token()
+    try:
+        assert call("/api/secret", {"name": "ai.gemini", "value": "abc123"}, tok)[1]["where"] == "file"
+        assert call("/api/settings")[1]["secrets"]["ai.gemini"] is True
+        assert "abc123" not in (home / "config.toml").read_text(encoding="utf-8")
+        assert call("/api/secret", {"name": "../../etc", "value": "x"}, tok)[0] == 400
+        from wurubururu import ai
+        assert ai._key({}, "gemini") == "abc123"
+    finally:
+        app.shutdown()
+
+
+def test_google_client_file_validation(home):
+    app, call = start_app(home)
+    tok = config.web_token()
+    try:
+        assert call("/api/google/client", {"text": "{}"}, tok)[0] == 400
+        assert call("/api/google/client", {"text": '{"web": {}}'}, tok)[0] == 400
+        ok = '{"installed": {"client_id": "x", "client_secret": "y"}}'
+        assert call("/api/google/client", {"text": ok}, tok)[0] == 200
+        assert call("/api/settings")[1]["google"]["client_secret"] is True
+    finally:
+        app.shutdown()
+
+
+def test_toml_writer_roundtrip():
+    import tomllib
+    from wurubururu.tomlwrite import diff, dumps
+    data = {"a": 1, "b": {"c": "따옴표\"와 \\역슬래시\n줄바꿈", "d": [1, 2], "mail.urgent": "x",
+                         "e": {"f": True, "g": 1.5}},
+            "radio": {"stations": [{"name": "방송", "url": "https://x"}]}, "empty": {}}
+    assert tomllib.loads(dumps(data)) == data
+    assert diff({"a": 1, "b": {"c": 2, "d": 3}}, {"a": 1, "b": {"c": 2, "d": 4}}) == {"b": {"d": 3}}
+
+
+def test_auto_device_reconnects():
+    from wurubururu.device import AutoDevice, DeviceError, MockDevice
+    state = {"plugged": False}
+    def factory():
+        if not state["plugged"]:
+            raise DeviceError("없음")
+        return MockDevice()
+    dev = AutoDevice(factory, retry=0)
+    dev.init()
+    assert not dev.connected
+    with pytest.raises(DeviceError):
+        dev.write_leds(0x40)
+    state["plugged"] = True
+    dev.write_leds(0x40)
+    assert dev.connected

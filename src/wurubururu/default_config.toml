@@ -34,7 +34,7 @@ model = "grok-4.7"
 command = "claude"
 
 [google]
-client_secret = "~/.wurubururu/client_secret.json"   # Google Cloud에서 받은 OAuth 클라이언트 파일
+client_secret = ""           # 비워 두면 설정 폴더의 client_secret.json (설정 화면에서 올리면 자동 저장)
 
 [gmail]
 enabled = true

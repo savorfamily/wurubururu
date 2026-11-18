@@ -31,9 +31,9 @@ def credentials(google_cfg: dict, interactive: bool = False):
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
     elif interactive:
-        secret = config.expand(google_cfg.get("client_secret", "~/.wurubururu/client_secret.json"))
+        secret = client_secret_path(google_cfg)
         if not secret.exists():
-            raise GoogleSetupError(f"OAuth 클라이언트 파일이 없습니다: {secret} (README의 'Google 연결' 참고)")
+            raise GoogleSetupError("OAuth 클라이언트 파일이 없습니다 (설정 화면 → Gmail·캘린더에서 올려 주세요)")
         creds = InstalledAppFlow.from_client_secrets_file(str(secret), SCOPES).run_local_server(port=0)
     else:
         raise GoogleSetupError("Google 로그인이 필요합니다: wurubururu login")
@@ -49,3 +49,38 @@ def credentials(google_cfg: dict, interactive: bool = False):
 def service(name: str, version: str, google_cfg: dict):
     from googleapiclient.discovery import build
     return build(name, version, credentials=credentials(google_cfg), cache_discovery=False)
+
+
+def client_secret_path(google_cfg: dict):
+    """비워 두면 설정 폴더의 client_secret.json."""
+    custom = (google_cfg.get("client_secret") or "").strip()
+    return config.expand(custom) if custom else config.HOME / "client_secret.json"
+
+
+def save_client_secret(google_cfg: dict, text: str) -> None:
+    """설정 화면에서 올린 OAuth 클라이언트 JSON을 검사하고 저장한다."""
+    import json
+    data = json.loads(text)
+    if not isinstance(data, dict) or not ({"installed", "web"} & set(data)):
+        raise GoogleSetupError("OAuth 클라이언트 파일이 아닙니다 (데스크톱 앱 유형으로 만든 JSON이어야 합니다)")
+    if "installed" not in data:
+        raise GoogleSetupError("'웹 애플리케이션' 유형입니다. '데스크톱 앱' 유형으로 다시 만들어 주세요")
+    p = client_secret_path(google_cfg)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(data), encoding="utf-8")
+    try:
+        p.chmod(0o600)
+    except OSError:
+        pass
+
+
+def status(google_cfg: dict) -> dict:
+    token = config.HOME / TOKEN_FILE
+    return {"client_secret": client_secret_path(google_cfg).exists(), "logged_in": token.exists()}
+
+
+def logout() -> None:
+    try:
+        (config.HOME / TOKEN_FILE).unlink()
+    except FileNotFoundError:
+        pass

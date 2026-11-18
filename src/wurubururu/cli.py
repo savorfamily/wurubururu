@@ -123,38 +123,41 @@ def cmd_config(args, cfg):
     print(config.CONFIG_PATH)
 
 
-def cmd_run(args, cfg):
-    from .ai import AIError, get_provider
-    from .engine import Engine
-    from .sources import build_sources
-    from . import tray, web
+def cmd_selftest(args, cfg):
+    """앱으로 묶였을 때 필요한 것이 다 들어 있는지 점검한다 (빌드 확인용)."""
+    import importlib
+    from pathlib import Path
+    results = {}
 
-    mock = args.mock or cfg.get("device", {}).get("mock", False)
-    try:
-        dev = open_device(mock=mock, verbose=mock)
-    except DeviceError as e:
-        sys.exit(f"{e}\n기기 없이 시험하려면: wurubururu --mock run")
-    try:
-        provider = get_provider(cfg.get("ai", {}))
-    except AIError as e:
-        print(f"AI 설정 오류, AI 없이 실행합니다: {e}")
-        provider = None
-    engine = Engine(cfg, dev, provider)
-    engine.echo = True
-    engine.sources = build_sources(cfg)
-    print(f"기기: {'가짜 장치(mock)' if mock else '우르부르 연결됨'}  /  AI: {provider.name if provider else '없음'}"
-          f"  /  알림 소스: {', '.join(s.name for s in engine.sources) or '없음'}")
-    engine.start()
-    port = int(cfg.get("web", {}).get("port", 8737))
-    web.start(engine, port)
-    url = f"http://127.0.0.1:{port}/"
-    print(f"우르부르 실행 중 — 설정 화면: {url}  (Ctrl+C 종료)")
-    try:
-        tray.run(engine, url)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        engine.stop()
+    def check(name, fn):
+        try:
+            v = fn()
+            results[name] = "ok" if v in (None, True) else str(v)
+        except Exception as e:
+            results[name] = f"FAIL: {type(e).__name__}: {e}"
+
+    from importlib import resources
+    check("web.html", lambda: len(resources.files("wurubururu").joinpath("web.html").read_text("utf-8")) > 1000)
+    check("default_config", lambda: bool(config.defaults()["ai"]["provider"]))
+    check("intro.mp3", lambda: Path(actions.bundled_intro()).stat().st_size > 100000)
+    from .device import _libusb_backend
+    check("libusb", lambda: _libusb_backend() is not None)
+    check("keyring", lambda: type(importlib.import_module("keyring").get_keyring()).__name__)
+    mods = ["PIL", "googleapiclient.discovery", "google_auth_oauthlib.flow"]
+    if sys.platform in ("darwin", "win32"):
+        mods.append("pystray")   # 리눅스 서버에서는 화면이 없어 불러올 수 없음
+    for mod in mods:
+        check(mod, lambda m=mod: importlib.import_module(m) and None)
+    check("gmail discovery", lambda: __import__("googleapiclient.discovery_cache", fromlist=["get_static_doc"])
+          .get_static_doc("gmail", "v1") is not None)
+    print(json.dumps(results, ensure_ascii=False, indent=1))
+    if any(v.startswith("FAIL") for v in results.values()):
+        sys.exit(1)
+
+
+def cmd_run(args, cfg):
+    from .app import App
+    App(mock=args.mock, echo=True).run(open_browser=args.open)
 
 
 def main(argv=None):
@@ -163,8 +166,9 @@ def main(argv=None):
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--mock", action="store_true", help="기기 없이 가짜 장치로 실행")
     sub = p.add_subparsers(dest="cmd")
-    for name in ("run", "info", "leds", "buttons", "login", "config"):
+    for name in ("info", "leds", "buttons", "login", "config", "selftest"):
         sub.add_parser(name)
+    sub.add_parser("run").add_argument("--open", action="store_true", help="설정 화면을 바로 연다")
     b = sub.add_parser("blink")
     b.add_argument("pattern", choices=sorted(BUILTIN))
     b.add_argument("repeat", nargs="?", type=int, default=3)
@@ -180,6 +184,10 @@ def main(argv=None):
     sub.add_parser("ai").add_argument("prompt")
     args = p.parse_args(argv)
     if not args.cmd:
+        from .app import App, frozen
+        if frozen():   # 앱(더블클릭)으로 실행됐을 때
+            App().run()
+            return
         p.print_help()
         return
     cfg = config.load()

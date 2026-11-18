@@ -14,6 +14,7 @@ from .device import Device
 from .leds import LedPlayer
 
 _ids = itertools.count(1)
+_print_lock = threading.Lock()   # 여러 스레드의 기록이 한 줄에 섞이지 않게
 
 
 @dataclass
@@ -66,13 +67,15 @@ class Engine:
         }
 
     # ---- 실행 / 종료 ------------------------------------------------
-    def start(self) -> None:
+    def start(self, greet: bool = True) -> None:
         self.buttons.start()
         for src in self.sources:
             t = threading.Thread(target=self._run_source, args=(src,), daemon=True,
                                  name=f"wurubururu-{src.name}")
             t.start()
             self._threads.append(t)
+        if not greet:
+            return
         self.leds.flash("test", 1)
         intro = self.cfg.get("intro", {})
         if intro.get("enabled"):
@@ -112,9 +115,10 @@ class Engine:
 
     def note(self, msg: str) -> None:
         line = f"{time.strftime('%H:%M:%S')} {msg}"
-        self.log.append(line)
-        if self.echo:
-            print(line, flush=True)
+        with _print_lock:
+            self.log.append(line)
+            if self.echo:
+                print(line, flush=True)
 
     # ---- 알림 -------------------------------------------------------
     @property
