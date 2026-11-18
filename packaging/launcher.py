@@ -9,8 +9,12 @@ def _prepare():
         home = os.path.expanduser(os.environ.get("WURUBURURU_HOME", "~/.wurubururu"))
         os.makedirs(home, exist_ok=True)
         log = open(os.path.join(home, "wurubururu.log"), "a", encoding="utf-8", buffering=1)
-        sys.stdout = sys.stdout or log
+        interactive = sys.stdout is not None and sys.stdout.isatty()
+        if not interactive:          # Finder나 시작 메뉴에서 켰을 때는 모든 출력을 기록 파일로
+            sys.stdout = log
         sys.stderr = log
+        import time
+        print(f"===== {time.strftime('%Y-%m-%d %H:%M:%S')} 시작 {sys.argv} =====", file=log, flush=True)
     # Finder에서 실행하면 PATH가 짧아 Homebrew 도구(mpv 등)를 못 찾는다
     if sys.platform == "darwin":
         extra = ["/opt/homebrew/bin", "/usr/local/bin", os.path.expanduser("~/.local/bin")]

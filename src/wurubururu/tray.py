@@ -92,6 +92,7 @@ def run(app) -> None:
         show(ic)
 
     app.icon = icon
+    print(f"[tray] pystray 백엔드: {type(icon).__module__}", flush=True)
     try:
         icon.run(setup=setup)
     except Exception:

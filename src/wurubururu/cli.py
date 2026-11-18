@@ -190,8 +190,8 @@ def main(argv=None):
     args = p.parse_args(argv)
     if not args.cmd:
         from .app import App, frozen
-        if frozen():   # 앱(더블클릭)으로 실행됐을 때
-            App().run()
+        if frozen():   # 앱(더블클릭)으로 실행됐을 때. 진행 상황은 기록 파일에 남긴다
+            App(echo=True).run()
             return
         p.print_help()
         return

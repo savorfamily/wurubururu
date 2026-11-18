@@ -66,6 +66,10 @@ class App:
             self.engine.note("설정을 적용했습니다")
             self.engine.refresh_leds()
 
+    def _say(self, msg: str) -> None:
+        if self.echo:
+            print(msg, flush=True)
+
     def note(self, msg: str) -> None:
         if self.engine:
             self.engine.note(msg)
@@ -102,7 +106,10 @@ class App:
 
     def run(self, open_browser: bool = False) -> None:
         from . import tray, web
+        from . import __version__
+        self._say(f"우르부르르 {__version__} 시작 ({sys.platform}, {'앱' if frozen() else '명령줄'})")
         if self.already_running():
+            self._say(f"이미 실행 중인 우르부르르가 있어 설정 화면만 엽니다: {self.url}")
             webbrowser.open(self.url)
             return
         first = config.is_first_run()
@@ -117,8 +124,10 @@ class App:
             print(f"우르부르르 실행 중 — 설정 화면: {self.url}  (Ctrl+C 종료)", flush=True)
         if first or open_browser:
             threading.Timer(1.0, webbrowser.open, args=(self.url,)).start()
+        self._say("메뉴 막대 아이콘 시작")
         try:
             tray.run(self)
+            self._say("메뉴 막대 아이콘 종료")
         except KeyboardInterrupt:
             pass
         finally:
