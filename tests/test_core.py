@@ -125,9 +125,11 @@ def make_engine(**over):
 
 
 def test_intro_plays_once_at_start_and_missing_file_is_skipped(tmp_path):
-    eng, _, opened = make_engine(intro={"enabled": True, "file": "~/x/intro.mp3"})
+    eng, _, opened = make_engine(intro={"enabled": True, "file": "~/x/intro.mp3", "delay": 0.05})
     try:
         eng.start()
+        assert opened == [], "초기화 직후 바로 틀지 않는다"
+        time.sleep(0.2)
         assert opened == ["sound:~/x/intro.mp3"]
     finally:
         eng.stop()
@@ -135,9 +137,10 @@ def test_intro_plays_once_at_start_and_missing_file_is_skipped(tmp_path):
     from wurubururu import actions
     assert actions.play_sound(str(tmp_path / "none.mp3")) is False
     assert Path(actions.bundled_intro()).is_file()
-    eng, _, opened = make_engine(intro={"enabled": True, "file": ""})
+    eng, _, opened = make_engine(intro={"enabled": True, "file": "", "delay": 0})
     try:
         eng.start()
+        time.sleep(0.1)
         assert opened == [f"sound:{actions.bundled_intro()}"], "경로를 비우면 기본 인트로"
     finally:
         eng.stop()
@@ -273,3 +276,20 @@ def test_web_api_requires_token(tmp_path, monkeypatch):
         assert call("/api/config", {"text": "this is = not [valid"}, config.web_token())[0] == 400
     finally:
         server.shutdown(); eng.stop()
+
+
+def test_same_source_error_logged_once():
+    eng, _, _ = make_engine()
+    class Broken:
+        name, interval, error = "broken", 5, None
+        def poll(self, engine): raise RuntimeError("로그인 필요")
+    src = Broken()
+    eng._stop.set()
+    for _ in range(3):
+        eng._stop.clear()
+        t = __import__("threading").Timer(0.05, eng._stop.set); t.start()
+        eng._run_source(src)
+    try:
+        assert sum("로그인 필요" in line for line in eng.log) == 1
+    finally:
+        eng.stop()

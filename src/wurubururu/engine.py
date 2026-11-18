@@ -74,9 +74,19 @@ class Engine:
             self._threads.append(t)
         self.leds.flash("test", 1)
         intro = self.cfg.get("intro", {})
-        if intro.get("enabled") and self._play_sound(intro.get("file") or actions.bundled_intro()):
-            self.note("인트로 재생")
+        if intro.get("enabled"):
+            # 기기 초기화 직후에는 우르부르 스피커가 잠깐 끊길 수 있어서 조금 기다렸다 튼다
+            t = threading.Timer(float(intro.get("delay", 1.5)), self._play_intro,
+                                args=(intro.get("file") or actions.bundled_intro(),))
+            t.daemon = True
+            t.start()
         self.note("시작")
+
+    def _play_intro(self, path: str) -> None:
+        if self._play_sound(path):
+            self.note("인트로 재생")
+        else:
+            self.note(f"인트로 재생 실패: {path}")
 
     def stop(self) -> None:
         self._stop.set()
@@ -90,10 +100,13 @@ class Engine:
         while not self._stop.is_set():
             try:
                 src.poll(self)
+                if src.error:
+                    self.note(f"[{src.name}] 정상으로 돌아옴")
                 src.error = None
             except Exception as e:
+                if src.error != str(e):   # 같은 오류는 한 번만 기록
+                    self.note(f"[{src.name}] 오류: {e}")
                 src.error = str(e)
-                self.note(f"[{src.name}] 오류: {e}")
             self._stop.wait(src.interval)
 
     def note(self, msg: str) -> None:

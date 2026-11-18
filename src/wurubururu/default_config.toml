@@ -69,6 +69,7 @@ audio_device = ""            # macOS에서 우르부르 스피커 이름을 지�
 [intro]                      # 프로그램을 켤 때 한 번 재생하는 인트로 음원
 enabled = true
 file = ""                    # 비워 두면 기본 인트로(용팔이). 다른 음원을 쓰려면 파일 경로를 적음
+delay = 1.5                  # 기기 초기화 뒤 몇 초 기다렸다 재생할지
 
 [dnd]
 minutes = 60
