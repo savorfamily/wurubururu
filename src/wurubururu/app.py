@@ -27,6 +27,8 @@ class App:
         self.port = int(self.cfg.get("web", {}).get("port", 8737))
         self.url = f"http://127.0.0.1:{self.port}/"
         self.server = None
+        self.icon = None                       # 메뉴 막대 아이콘 (tray.py가 채움)
+        self.quit_event = threading.Event()
 
     # ---- 엔진 ----------------------------------------------------------
     def _build_engine(self) -> Engine:
@@ -63,6 +65,25 @@ class App:
             self.engine.start(greet=False)
             self.engine.note("설정을 적용했습니다")
             self.engine.refresh_leds()
+
+    def note(self, msg: str) -> None:
+        if self.engine:
+            self.engine.note(msg)
+
+    def quit(self) -> None:
+        """설정 화면이나 메뉴에서 끝내기."""
+        self.quit_event.set()
+        icon = self.icon
+        if icon is None:
+            return
+        if sys.platform == "darwin":
+            try:
+                from PyObjCTools import AppHelper
+                AppHelper.callAfter(icon.stop)
+                return
+            except Exception:
+                pass
+        icon.stop()
 
     def device_status(self) -> dict:
         if isinstance(self.device, MockDevice):

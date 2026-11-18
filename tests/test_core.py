@@ -389,3 +389,12 @@ def test_auto_device_reconnects():
     state["plugged"] = True
     dev.write_leds(0x40)
     assert dev.connected
+
+
+def test_quit_from_settings_page_stops_app(home):
+    app, call = start_app(home)
+    try:
+        assert call("/api/quit", {}, config.web_token())[0] == 200
+        assert app.quit_event.wait(2), "아이콘이 없어도 설정 화면에서 끝낼 수 있어야 한다"
+    finally:
+        app.shutdown()

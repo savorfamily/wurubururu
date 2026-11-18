@@ -240,6 +240,10 @@
         <label>집중 / 휴식</label>
         <div class="row"><input type="number" min="1" data-path="pomodoro|work_minutes"> 분 집중, <input type="number" min="1" data-path="pomodoro|break_minutes"> 분 휴식</div>
       </div>
+      <div class="row" style="margin-top:14px">
+        <button id="quitApp">우르부르 끝내기</button>
+        <span class="hint">메뉴 막대 아이콘의 '끝내기'와 같습니다</span>
+      </div>
       <p class="hint" style="margin-top:14px">다른 프로그램에서 알림 보내기: <code>wurubururu notify "빌드 끝"</code> 또는 <code>POST http://127.0.0.1:8737/api/notify</code></p>
     </section>
 
@@ -442,6 +446,11 @@ $("save").onclick = async () => {
   catch (e) { toast("저장 실패: " + e.message); }
 };
 $("revert").onclick = () => load();
+$("quitApp").onclick = async () => {
+  if (!confirm("우르부르를 끝낼까요? 귀 알림도 멈춥니다.")) return;
+  await api("/api/quit", {}).catch(() => {});
+  document.body.innerHTML = '<p style="padding:40px;font-size:16px">우르부르를 끝냈습니다. 다시 쓰려면 응용 프로그램에서 우르부르를 여세요.</p>';
+};
 $("rawSave").onclick = async () => {
   try { await api("/api/config", { text:$("rawCfg").value }); toast("파일을 저장하고 적용했습니다"); await load(); }
   catch (e) { toast("저장 실패: " + e.message); }

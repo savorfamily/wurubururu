@@ -15,6 +15,7 @@
   POST /api/command          버튼 명령 실행 {command}
   POST /api/led              LED 패턴 시험 {pattern}
   POST /api/ai/test          AI에 짧은 질문을 보내고 답을 읽어줌
+  POST /api/quit             프로그램 끝내기
 """
 from __future__ import annotations
 
@@ -72,6 +73,8 @@ def settings_payload(app, login: GoogleLogin) -> dict:
         "patterns": sorted(BUILTIN),
         "commands": sorted(app.engine.commands) if app.engine else [],
         "platform": sys.platform,
+        "tray": app.icon is not None,
+        "log_file": str(config.HOME / "wurubururu.log"),
         "version": __version__,
     }
 
@@ -149,6 +152,9 @@ def make_handler(app, token: str):
                 return self._send(200, {"ok": True})
             if path == "/api/led":
                 engine.leds.flash(data.get("pattern", "test"), int(data.get("repeat", 2)))
+                return self._send(200, {"ok": True})
+            if path == "/api/quit":
+                threading.Timer(0.3, app.quit).start()
                 return self._send(200, {"ok": True})
             if path == "/api/ai/test":
                 if engine.provider is None:
