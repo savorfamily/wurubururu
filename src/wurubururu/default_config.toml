@@ -76,15 +76,18 @@ minutes = 60
 [web]
 port = 8737
 
-# 알림 종류와 중요도에 따른 LED 패턴.
-# 이름(left, right, both, urgent, alarm, pulse ...) 또는 [[값, 0.1초 단위], ...]
+# 알림 종류와 중요도에 따른 LED 패턴. 초록 = 보통, 빨강 = 급함.
+#   green_left, green_right, pulse        초록 깜빡임
+#   red_left, red_right, urgent, alarm    빨강 깜빡임 (alarm은 좌우 번갈아)
+#   left, right, both                     원본 WebToy 패턴 (빨강·초록 교대)
+#   직접 지정: [[값, 0.1초 단위], ...]  값: 왼쪽 빨강 0x80, 왼쪽 초록 0x40, 오른쪽 빨강 0x20, 오른쪽 초록 0x10
 [patterns]
 "mail.urgent" = "urgent"
-"mail.normal" = "left"
-"calendar.normal" = "right"
-"calendar.urgent" = "both"
+"mail.normal" = "green_left"
+"calendar.normal" = "green_right"
+"calendar.urgent" = "red_right"
 "site.urgent" = "alarm"
-"pomodoro.normal" = "both"
+"pomodoro.normal" = "pulse"
 "notify.normal" = "pulse"
 "notify.urgent" = "urgent"
 focus = "solid_right"        # 집중 타이머 진행 중 표시

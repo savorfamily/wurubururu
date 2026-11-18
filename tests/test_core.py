@@ -41,6 +41,15 @@ def test_original_patterns_match_reverse_engineered_bytes():
     assert BUILTIN["both"] == [(0x90, 5), (0x60, 5)]
 
 
+def test_color_meaning_matches_hardware():
+    """기기 확인 결과: 0x80 왼빨, 0x40 왼초, 0x20 오빨, 0x10 오초. 급함은 빨강만, 보통은 초록만."""
+    red, green = 0xA0, 0x50
+    for name in ("urgent", "alarm", "red_left", "red_right"):
+        assert all(v & green == 0 for v, _ in BUILTIN[name]), name
+    for name in ("green_left", "green_right", "pulse", "solid_left", "solid_right"):
+        assert all(v & red == 0 for v, _ in BUILTIN[name]), name
+
+
 def test_click_long_double():
     det = GestureDetector()
     det.feed(0, 0.0)

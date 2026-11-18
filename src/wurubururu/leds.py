@@ -14,17 +14,29 @@ from .device import Device, DeviceError
 Step = tuple[int, int]
 TICK = 0.1
 
-# 원본 프로그램에 내장돼 있던 세 패턴 + 추가 패턴
+# 실제 기기에서 확인한 비트 배치 (macOS, 2026-11-18)
+L_RED, L_GREEN, R_RED, R_GREEN = 0x80, 0x40, 0x20, 0x10
+RED = L_RED | R_RED
+GREEN = L_GREEN | R_GREEN
+
 BUILTIN: dict[str, list[Step]] = {
-    "left": [(0x80, 5), (0x40, 5)],
-    "right": [(0x10, 5), (0x20, 5)],
-    "both": [(0x90, 5), (0x60, 5)],
-    "urgent": [(0x90, 1), (0x60, 1)],
-    "alarm": [(0xF0, 2), (0x00, 2)],
-    "solid_left": [(0x80, 10)],
-    "solid_right": [(0x10, 10)],
-    "pulse": [(0x90, 2), (0x00, 8)],
-    "test": [(0x80, 3), (0x40, 3), (0x20, 3), (0x10, 3), (0xF0, 3)],
+    # 원본 WebToy에 내장돼 있던 세 패턴 (빨강·초록 교대)
+    "left": [(L_RED, 5), (L_GREEN, 5)],
+    "right": [(R_GREEN, 5), (R_RED, 5)],
+    "both": [(L_RED | R_GREEN, 5), (L_GREEN | R_RED, 5)],
+    # 초록: 보통 알림
+    "green_left": [(L_GREEN, 5), (0x00, 5)],
+    "green_right": [(R_GREEN, 5), (0x00, 5)],
+    "pulse": [(GREEN, 2), (0x00, 8)],
+    # 빨강: 급한 알림
+    "red_left": [(L_RED, 5), (0x00, 5)],
+    "red_right": [(R_RED, 5), (0x00, 5)],
+    "urgent": [(RED, 1), (0x00, 1)],
+    "alarm": [(L_RED, 2), (R_RED, 2)],
+    # 켜 두기
+    "solid_left": [(L_GREEN, 10)],
+    "solid_right": [(R_GREEN, 10)],
+    "test": [(L_RED, 3), (L_GREEN, 3), (R_RED, 3), (R_GREEN, 3), (0xF0, 3)],
     "off": [(0x00, 1)],
 }
 
