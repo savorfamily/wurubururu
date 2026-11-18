@@ -15,6 +15,33 @@ ADDR_OUT, ADDR_IN = 0xB0A0, 0xB0A2
 INIT_VALUE = 0xF0
 
 
+# Apple Silicon 맥의 Homebrew는 /opt/homebrew 에 설치해서 pyusb가 libusb를 못 찾는 경우가 많다
+_LIBUSB_CANDIDATES = (
+    "/opt/homebrew/lib/libusb-1.0.dylib",
+    "/usr/local/lib/libusb-1.0.dylib",
+    "/opt/local/lib/libusb-1.0.dylib",
+)
+
+
+def _libusb_backend():
+    """libusb 백엔드를 찾는다. 못 찾으면 None을 돌려 pyusb 기본 탐색에 맡긴다."""
+    import os
+    import sys
+    try:
+        import usb.backend.libusb1 as libusb1
+    except ImportError:  # pragma: no cover
+        return None
+    backend = libusb1.get_backend()
+    if backend is not None or sys.platform != "darwin":
+        return backend
+    for path in _LIBUSB_CANDIDATES:
+        if os.path.exists(path):
+            backend = libusb1.get_backend(find_library=lambda _name, p=path: p)
+            if backend is not None:
+                return backend
+    return None
+
+
 class DeviceError(Exception):
     """장치를 찾지 못했거나 통신에 실패했을 때."""
 
@@ -37,7 +64,7 @@ class UsbDevice(Device):
         self._usb = usb.core
         self._lock = threading.Lock()
         try:
-            self._dev = usb.core.find(idVendor=vid, idProduct=pid)
+            self._dev = usb.core.find(idVendor=vid, idProduct=pid, backend=_libusb_backend())
         except usb.core.NoBackendError as e:
             raise DeviceError("libusb를 찾지 못했습니다 (macOS: brew install libusb)") from e
         if self._dev is None:
