@@ -63,6 +63,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Google 연결 정보 넣기 (저장소 비밀값 GOOGLE_OAUTH_CLIENT)
+        shell: bash
+        env:
+          GOOGLE_OAUTH_CLIENT: ${{ secrets.GOOGLE_OAUTH_CLIENT }}
+        run: |
+          if [ -n "$GOOGLE_OAUTH_CLIENT" ]; then
+            printf '%s' "$GOOGLE_OAUTH_CLIENT" > src/wurubururu/assets/google_client.json
+            python -c "import json;d=json.load(open('src/wurubururu/assets/google_client.json'));assert 'installed' in d, '데스크톱 앱 유형이어야 합니다'"
+            echo "Google 연결 정보를 앱에 넣었습니다"
+          else
+            echo "::warning::GOOGLE_OAUTH_CLIENT 비밀값이 없어 Google 연결 정보 없이 빌드합니다"
+          fi
       - name: 설치
         # cryptography를 직접 컴파일하면 시스템 OpenSSL과 묶여 앱 안에서 깨진다 (인텔 맥). 미리 빌드된 것만 쓴다.
         run: pip install --only-binary=cryptography,cffi ".[all]" pyinstaller
@@ -95,6 +107,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Google 연결 정보 넣기 (저장소 비밀값 GOOGLE_OAUTH_CLIENT)
+        shell: bash
+        env:
+          GOOGLE_OAUTH_CLIENT: ${{ secrets.GOOGLE_OAUTH_CLIENT }}
+        run: |
+          if [ -n "$GOOGLE_OAUTH_CLIENT" ]; then
+            printf '%s' "$GOOGLE_OAUTH_CLIENT" > src/wurubururu/assets/google_client.json
+            python -c "import json;d=json.load(open('src/wurubururu/assets/google_client.json'));assert 'installed' in d, '데스크톱 앱 유형이어야 합니다'"
+            echo "Google 연결 정보를 앱에 넣었습니다"
+          else
+            echo "::warning::GOOGLE_OAUTH_CLIENT 비밀값이 없어 Google 연결 정보 없이 빌드합니다"
+          fi
       - name: 설치
         run: pip install ".[all]" pyinstaller
       - name: 아이콘

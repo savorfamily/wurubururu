@@ -31,7 +31,8 @@ def _post_json(url: str, headers: dict, body: dict, timeout: int = 40) -> dict:
         headers={"Content-Type": "application/json", **headers}, method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        from .net import urlopen
+        with urlopen(req, timeout=timeout) as r:
             return json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", "replace")[:300]

@@ -9,7 +9,7 @@ description = "딴지일보 우르부르(WebToy, 2001)를 macOS / Windows 11에�
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT (code only; bundled audio is All Rights Reserved, see src/wurubururu/assets/LICENSE-AUDIO.md)" }
-dependencies = ["pyusb>=1.2", "libusb-package>=1.0.26", "keyring>=24"]
+dependencies = ["pyusb>=1.2", "libusb-package>=1.0.26", "keyring>=24", "certifi"]
 
 [project.optional-dependencies]
 google = ["google-api-python-client>=2.100", "google-auth-oauthlib>=1.1"]

@@ -150,6 +150,10 @@ def cmd_selftest(args, cfg):
         check(mod, lambda m=mod: importlib.import_module(m) and None)
     check("gmail discovery", lambda: __import__("googleapiclient.discovery_cache", fromlist=["get_static_doc"])
           .get_static_doc("gmail", "v1") is not None)
+    from .net import ca_file, urlopen
+    check("https certs", lambda: bool(ca_file()))
+    from .sources.google_auth import bundled_client
+    results["google client"] = "bundled" if bundled_client() else "없음 (사용자가 직접 올려야 함)"
     print(json.dumps(results, ensure_ascii=False, indent=1))
     if any(v.startswith("FAIL") for v in results.values()):
         sys.exit(1)

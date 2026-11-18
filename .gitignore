@@ -6,3 +6,4 @@ build/
 .venv/
 client_secret*.json
 token*.json
+src/wurubururu/assets/google_client.json

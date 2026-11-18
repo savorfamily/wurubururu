@@ -230,7 +230,8 @@ def test_providers_build_correct_requests(monkeypatch, name, response, expect_ur
         def __enter__(self): return self
         def __exit__(self, *a): pass
         def read(self): return json.dumps(response).encode()
-    def fake_urlopen(req, timeout=0):
+    def fake_urlopen(req, timeout=0, context=None):
+        captured["context"] = context
         captured["url"] = req.full_url
         captured["headers"] = dict(req.header_items())
         captured["body"] = json.loads(req.data)
@@ -243,6 +244,7 @@ def test_providers_build_correct_requests(monkeypatch, name, response, expect_ur
     assert p.complete("sys", "hi") == "안녕"
     assert expect_url in captured["url"]
     assert expect_header in captured["headers"]
+    assert captured["context"] is not None, "앱 안에서도 인증서를 확인할 수 있게 certifi 묶음을 써야 한다"
 
 
 def test_provider_none_and_missing_key(monkeypatch):
@@ -398,3 +400,63 @@ def test_quit_from_settings_page_stops_app(home):
         assert app.quit_event.wait(2), "아이콘이 없어도 설정 화면에서 끝낼 수 있어야 한다"
     finally:
         app.shutdown()
+
+
+def test_popup_login_flow(home, monkeypatch):
+    """로그인 주소를 만들고, Google이 돌려보내는 응답을 받아 토큰을 저장한다."""
+    import urllib.parse
+    from wurubururu.sources import google_auth
+    cc = {"installed": {"client_id": "cid.apps.googleusercontent.com", "client_secret": "s",
+                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                        "token_uri": "https://oauth2.googleapis.com/token", "redirect_uris": ["http://localhost"]}}
+    monkeypatch.setattr(google_auth, "bundled_client", lambda: cc)
+    assert google_auth.status({})["ready"] is True
+
+    fetched = {}
+    from google_auth_oauthlib.flow import Flow
+    def fake_fetch(self, **kw):
+        fetched.update(kw)
+        from google.oauth2.credentials import Credentials
+        self.oauth2session.token = {"access_token": "a", "refresh_token": "r"}
+    monkeypatch.setattr(Flow, "fetch_token", fake_fetch)
+    monkeypatch.setattr(Flow, "credentials", property(lambda self: type("C", (), {"to_json": lambda s: '{"token": "a"}'})()))
+
+    done = []
+    login = google_auth.PopupLogin({}, on_done=lambda: done.append(1), timeout=10)
+    url = login.start()
+    q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+    assert url.startswith("https://accounts.google.com/") and q["access_type"] == ["offline"]
+    redirect = q["redirect_uri"][0]
+    assert redirect.startswith("http://127.0.0.1:")
+    with urllib.request.urlopen(f"{redirect}?state={q['state'][0]}&code=abc&scope=x", timeout=5) as r:
+        assert "Google 연결 완료" in r.read().decode()
+    for _ in range(50):
+        if not login.running:
+            break
+        time.sleep(0.05)
+    assert login.error is None, login.error
+    assert done == [1]
+    assert fetched["authorization_response"].startswith("https://127.0.0.1:") and "code=abc" in fetched["authorization_response"]
+    assert (home / "google_token.json").read_text() == '{"token": "a"}'
+
+
+def test_popup_login_cancel(home, monkeypatch):
+    import urllib.parse
+    from wurubururu.sources import google_auth
+    cc = {"installed": {"client_id": "c", "client_secret": "s", "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                        "token_uri": "https://oauth2.googleapis.com/token"}}
+    monkeypatch.setattr(google_auth, "bundled_client", lambda: cc)
+    login = google_auth.PopupLogin({}, timeout=10)
+    q = urllib.parse.parse_qs(urllib.parse.urlparse(login.start()).query)
+    with urllib.request.urlopen(f"{q['redirect_uri'][0]}?error=access_denied", timeout=5) as r:
+        assert "취소" in r.read().decode()
+    for _ in range(50):
+        if not login.running:
+            break
+        time.sleep(0.05)
+    assert "취소" in (login.error or "")
+
+
+def test_https_uses_bundled_certificates():
+    from wurubururu import net
+    assert net.ca_file() and net.ssl_context().verify_mode.name == "CERT_REQUIRED"

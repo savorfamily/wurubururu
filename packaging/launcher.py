@@ -23,5 +23,7 @@ def _prepare():
 
 if __name__ == "__main__":
     _prepare()
+    from wurubururu.net import use_bundled_certs
+    use_bundled_certs()   # 앱 안의 Python이 HTTPS 인증서를 확인할 수 있게
     from wurubururu.cli import main
     main()

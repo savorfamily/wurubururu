@@ -36,35 +36,32 @@ SECRET_NAMES = {f"ai.{p}" for p in KEY_ENV}
 
 
 class GoogleLogin:
-    """설정 화면의 'Google로 로그인' 버튼. 로그인은 브라우저에서 진행되므로 별도 스레드로 돌린다."""
+    """설정 화면의 'Google로 로그인' 버튼. 로그인 주소를 돌려주면 화면이 팝업으로 연다."""
 
     def __init__(self):
-        self.running = False
+        self.session = None
         self.error: str | None = None
-        self._lock = threading.Lock()
 
-    def start(self, app) -> None:
-        with self._lock:
-            if self.running:
-                return
-            self.running, self.error = True, None
-        threading.Thread(target=self._run, args=(app,), daemon=True).start()
+    @property
+    def running(self) -> bool:
+        return bool(self.session and self.session.running)
 
-    def _run(self, app) -> None:
-        from .sources.google_auth import credentials
-        try:
-            credentials(app.cfg.get("google", {}), interactive=True)
-            app.reload()
-        except Exception as e:
-            self.error = str(e)
-        finally:
-            self.running = False
+    def start(self, app) -> str:
+        from .sources.google_auth import PopupLogin
+        if self.running:
+            return self.session.url
+        self.error = None
+        self.session = PopupLogin(app.cfg.get("google", {}), on_done=app.reload)
+        return self.session.start()
+
+    def current_error(self):
+        return self.error or (self.session.error if self.session else None)
 
 
 def settings_payload(app, login: GoogleLogin) -> dict:
     from .sources.google_auth import status as google_status
     g = google_status(app.cfg.get("google", {}))
-    g.update(login_running=login.running, error=login.error)
+    g.update(login_running=login.running, error=login.current_error())
     return {
         "cfg": app.cfg,
         "secrets": {n: keystore.has(n) for n in sorted(SECRET_NAMES)},
@@ -189,8 +186,7 @@ def make_handler(app, token: str):
                 save_client_secret(app.cfg.get("google", {}), str(data.get("text", "")))
                 return self._send(200, {"ok": True})
             if path == "/api/google/login":
-                login.start(app)
-                return self._send(200, {"ok": True})
+                return self._send(200, {"ok": True, "url": login.start(app)})
             if path == "/api/google/logout":
                 from .sources.google_auth import logout
                 logout()
