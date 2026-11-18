@@ -114,7 +114,7 @@ class App:
             print(f"기기: {'가짜 장치(mock)' if self.mock else ('우르부르 연결됨' if self.device_status()['connected'] else '연결 안 됨')}"
                   f"  /  AI: {e.provider.name if e.provider else '없음'}"
                   f"  /  알림 소스: {', '.join(s.name for s in e.sources) or '없음'}")
-            print(f"우르부르 실행 중 — 설정 화면: {self.url}  (Ctrl+C 종료)", flush=True)
+            print(f"우르부르르 실행 중 — 설정 화면: {self.url}  (Ctrl+C 종료)", flush=True)
         if first or open_browser:
             threading.Timer(1.0, webbrowser.open, args=(self.url,)).start()
         try:

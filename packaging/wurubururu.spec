@@ -49,7 +49,7 @@ if MAC:
         bundle_identifier="kr.savorfamily.wurubururu",
         version=VERSION,
         info_plist={
-            "CFBundleDisplayName": "우르부르",
+            "CFBundleDisplayName": "우르부르르",
             "CFBundleName": "wurubururu",
             "CFBundleShortVersionString": VERSION,
             "CFBundleVersion": VERSION,

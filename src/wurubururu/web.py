@@ -162,7 +162,7 @@ def make_handler(app, token: str):
                 from .ai import AIError
                 try:
                     text = engine.provider.complete(
-                        "한국어로 한 문장만 답한다.", "우르부르 알림 단말의 첫 인사를 한 문장으로 해줘.").strip()
+                        "한국어로 한 문장만 답한다.", "우르부르르 알림 프로그램의 첫 인사를 한 문장으로 해줘.").strip()
                 except AIError as e:
                     raise ValueError(str(e))
                 engine.say(text)

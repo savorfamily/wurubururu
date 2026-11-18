@@ -144,4 +144,4 @@ jobs:
           else
             TAG="v$(python3 -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"',open('src/wurubururu/__init__.py').read()).group(1))")"
           fi
-          gh release create "$TAG" out/* --target "$GITHUB_SHA" --title "우르부르 $TAG" --notes-file packaging/RELEASE_NOTES.md
+          gh release create "$TAG" out/* --target "$GITHUB_SHA" --title "우르부르르 $TAG" --notes-file packaging/RELEASE_NOTES.md

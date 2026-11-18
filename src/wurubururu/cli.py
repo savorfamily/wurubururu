@@ -88,9 +88,9 @@ def cmd_notify(args, cfg):
             ok = json.loads(r.read().decode()).get("ok")
         print("알림을 보냈습니다" if ok else "같은 알림이 이미 있어서 무시됐습니다")
     except urllib.error.HTTPError as e:
-        sys.exit(f"우르부르가 알림을 거절했습니다 (HTTP {e.code})")
+        sys.exit(f"우르부르르가 알림을 거절했습니다 (HTTP {e.code})")
     except OSError as e:
-        sys.exit(f"실행 중인 우르부르에 연결하지 못했습니다 (wurubururu run 먼저): {e}")
+        sys.exit(f"실행 중인 우르부르르에 연결하지 못했습니다 (wurubururu run 먼저): {e}")
 
 
 def cmd_say(args, cfg):
@@ -166,7 +166,7 @@ def main(argv=None):
             stream.reconfigure(errors="replace")
         except Exception:
             pass
-    p = argparse.ArgumentParser(prog="wurubururu", description="우르부르 알림 단말",
+    p = argparse.ArgumentParser(prog="wurubururu", description="우르부르르 — 우르부르 알림 단말 프로그램",
                                 epilog=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--version", action="version", version=__version__)
     p.add_argument("--mock", action="store_true", help="기기 없이 가짜 장치로 실행")

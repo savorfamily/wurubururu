@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>우르부르</title>
+<title>우르부르르</title>
 <style>
   :root { --bg:#f5f3ed; --card:#fff; --ink:#1f1e1b; --mute:#77736a; --line:#e3dfd4; --accent:#3f6fc2; --accent-ink:#fff; --ok:#2f7a4f; --warn:#b4542a; --soft:#eef2fa; }
   @media (prefers-color-scheme: dark) { :root { --bg:#191917; --card:#242320; --ink:#eeeae0; --mute:#a09b90; --line:#38362f; --accent:#7ea4e6; --accent-ink:#10131a; --ok:#7fd1a0; --warn:#f0a07a; --soft:#22293a; } }
@@ -66,7 +66,7 @@
 <body>
 <header>
   <div class="bar">
-    <h1>우르부르</h1>
+    <h1>우르부르르</h1>
     <span class="ver" id="ver"></span>
     <div class="row" id="pills"></div>
   </div>
@@ -241,7 +241,7 @@
         <div class="row"><input type="number" min="1" data-path="pomodoro|work_minutes"> 분 집중, <input type="number" min="1" data-path="pomodoro|break_minutes"> 분 휴식</div>
       </div>
       <div class="row" style="margin-top:14px">
-        <button id="quitApp">우르부르 끝내기</button>
+        <button id="quitApp">우르부르르 끝내기</button>
         <span class="hint">메뉴 막대 아이콘의 '끝내기'와 같습니다</span>
       </div>
       <p class="hint" style="margin-top:14px">다른 프로그램에서 알림 보내기: <code>wurubururu notify "빌드 끝"</code> 또는 <code>POST http://127.0.0.1:8737/api/notify</code></p>
@@ -447,9 +447,9 @@ $("save").onclick = async () => {
 };
 $("revert").onclick = () => load();
 $("quitApp").onclick = async () => {
-  if (!confirm("우르부르를 끝낼까요? 귀 알림도 멈춥니다.")) return;
+  if (!confirm("우르부르르를 끝낼까요? 귀 알림도 멈춥니다.")) return;
   await api("/api/quit", {}).catch(() => {});
-  document.body.innerHTML = '<p style="padding:40px;font-size:16px">우르부르를 끝냈습니다. 다시 쓰려면 응용 프로그램에서 우르부르를 여세요.</p>';
+  document.body.innerHTML = '<p style="padding:40px;font-size:16px">우르부르르를 끝냈습니다. 다시 쓰려면 응용 프로그램에서 우르부르르를 여세요.</p>';
 };
 $("rawSave").onclick = async () => {
   try { await api("/api/config", { text:$("rawCfg").value }); toast("파일을 저장하고 적용했습니다"); await load(); }

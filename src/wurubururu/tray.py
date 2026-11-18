@@ -70,7 +70,7 @@ def run(app) -> None:
              visible=autostart.supported()),
         item("끝내기", lambda icon, _: icon.stop()),
     )
-    icon = pystray.Icon("wurubururu", icon_image(64), "우르부르", menu)
+    icon = pystray.Icon("wurubururu", icon_image(64), "우르부르르", menu)
 
     def show(ic):
         try:
