@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "빌드 후 현재 버전으로 릴리스 게시 (태그 v<버전> 자동 생성)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -99,7 +104,7 @@ jobs:
 
   release:
     needs: [mac, windows]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -112,4 +117,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -la out
-          gh release create "${GITHUB_REF_NAME}" out/* --title "우르부르 ${GITHUB_REF_NAME}" --notes-file packaging/RELEASE_NOTES.md
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(python3 -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"',open('src/wurubururu/__init__.py').read()).group(1))")"
+          fi
+          gh release create "$TAG" out/* --target "$GITHUB_SHA" --title "우르부르 $TAG" --notes-file packaging/RELEASE_NOTES.md
