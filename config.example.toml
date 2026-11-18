@@ -10,6 +10,7 @@ right = 0x01                 # 오른발
 mute = 0x04                  # 머리
 long_ms = 700
 double_ms = 350
+release_ms = 80              # 누르는 도중 이보다 짧게 끊기는 접촉은 무시 (노화된 버튼 대응)
 
 [ai]
 provider = "gemini"          # gemini | claude | grok | claude_cli | none

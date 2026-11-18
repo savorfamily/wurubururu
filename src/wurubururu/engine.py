@@ -49,7 +49,8 @@ class Engine:
         b = dict(cfg.get("device", {}).get("buttons", {}))
         detector = GestureDetector(
             bits={k: int(b[k]) for k in ("left", "right", "mute") if k in b} or None,
-            long_ms=int(b.get("long_ms", 700)), double_ms=int(b.get("double_ms", 350)))
+            long_ms=int(b.get("long_ms", 700)), double_ms=int(b.get("double_ms", 350)),
+            release_reads=max(1, round(int(b.get("release_ms", 80)) / 20)))
         self.buttons = ButtonWatcher(device, self.on_button, detector)
         self.leds.on_error = lambda m: self.note(f"LED 오류: {m}")
         self.buttons.on_error = lambda m: self.note(f"버튼 오류: {m}")

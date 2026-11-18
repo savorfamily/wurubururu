@@ -20,15 +20,19 @@ class GestureDetector:
     """시간과 값을 넣어 주면 (버튼, 동작) 이벤트를 돌려주는 순수 상태 기계."""
 
     def __init__(self, bits: dict[str, int] | None = None, long_ms: int = 700,
-                 double_ms: int = 350, debounce_reads: int = 2, idle: int | None = None):
+                 double_ms: int = 350, press_reads: int = 1, release_reads: int = 4,
+                 idle: int | None = None):
+        """press_reads: 몇 번 연속 눌림으로 읽혀야 누른 것으로 볼지
+        release_reads: 몇 번 연속 뗌으로 읽혀야 뗀 것으로 볼지.
+        노화된 버튼은 누르는 도중 접촉이 잠깐씩 끊기므로 뗌 쪽을 더 너그럽게 본다."""
         self.bits = dict(bits or DEFAULT_BITS)
         self.long_s = long_ms / 1000
         self.double_s = double_ms / 1000
-        self.debounce_reads = debounce_reads
+        self.press_reads = max(1, press_reads)
+        self.release_reads = max(1, release_reads)
         self.idle = idle
-        self._stable = 0
-        self._candidate = 0
-        self._count = 0
+        self._down: dict[str, bool] = {n: False for n in self.bits}
+        self._streak: dict[str, int] = {n: 0 for n in self.bits}   # 현재 상태와 다른 값이 연속으로 읽힌 횟수
         self._down_at: dict[str, float] = {}
         self._long_fired: set[str] = set()
         self._pending_click: dict[str, float] = {}
@@ -37,21 +41,22 @@ class GestureDetector:
         if self.idle is None:
             self.idle = raw
         pressed = (raw ^ self.idle) & 0x0F
-        if pressed == self._candidate:
-            self._count += 1
-        else:
-            self._candidate, self._count = pressed, 1
         events: list[tuple[str, str]] = []
-        if self._count >= self.debounce_reads and pressed != self._stable:
-            changed = pressed ^ self._stable
-            self._stable = pressed
-            for name, bit in self.bits.items():
-                if not changed & bit:
-                    continue
-                if pressed & bit:
-                    self._down_at[name] = now
-                else:
-                    self._on_release(name, now, events)
+        for name, bit in self.bits.items():
+            reading = bool(pressed & bit)
+            if reading == self._down[name]:
+                self._streak[name] = 0
+                continue
+            self._streak[name] += 1
+            need = self.release_reads if self._down[name] else self.press_reads
+            if self._streak[name] < need:
+                continue
+            self._streak[name] = 0
+            self._down[name] = reading
+            if reading:
+                self._down_at[name] = now
+            else:
+                self._on_release(name, now, events)
         for name, t0 in self._down_at.items():
             if name not in self._long_fired and now - t0 >= self.long_s:
                 self._long_fired.add(name)

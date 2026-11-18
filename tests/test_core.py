@@ -76,10 +76,28 @@ def test_click_long_double():
 
     det = GestureDetector(); det.feed(0, 0.0)
     a, t = press(det, 0x01, 0.1, 0.08)
-    gap = [(0, t), (0, t + 0.02), (0, t + 0.04)]
-    b, t2 = press(det, 0x01, t + 0.1, 0.08)
+    gap = [(0, t + i * 0.02) for i in range(6)]          # 0.12초 뗌 (실제 읽기 간격 0.02초)
+    b, t2 = press(det, 0x01, t + 0.12, 0.08)
     tail = [(0, t2 + i * 0.02) for i in range(30)]
     assert feed(det, a + gap + b + tail) == [("right", "double")]
+
+
+def test_flaky_contact_during_press_is_one_click():
+    """노화된 버튼: 누르는 도중 접촉이 1~2회씩 끊겨도 클릭 한 번으로 본다."""
+    det = GestureDetector()
+    det.feed(0, 0.0)
+    pattern = [0x02, 0x02, 0, 0x02, 0x02, 0, 0, 0x02, 0x02, 0x02, 0, 0x02]
+    seq = [(v, 0.1 + i * 0.02) for i, v in enumerate(pattern)]
+    t = seq[-1][1]
+    tail = [(0, t + 0.02 * (i + 1)) for i in range(30)]
+    assert feed(det, seq + tail) == [("left", "click")]
+
+
+def test_single_read_press_is_recognized():
+    """꾹 눌렀을 때 아주 짧게만 잡혀도 놓치지 않는다."""
+    det = GestureDetector()
+    det.feed(0, 0.0)
+    assert feed(det, [(0x04, 0.1)] + [(0, 0.12 + i * 0.02) for i in range(30)]) == [("mute", "click")]
 
 
 def test_buttons_work_when_idle_level_is_high():
