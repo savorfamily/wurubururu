@@ -41,6 +41,19 @@ def test_original_patterns_match_reverse_engineered_bytes():
     assert BUILTIN["both"] == [(0x90, 5), (0x60, 5)]
 
 
+def test_button_bits_match_hardware():
+    """기기 확인 결과: 왼발 0x02, 오른발 0x01, 머리 0x04."""
+    cfg = config.load(path=config.HOME / "does-not-exist.toml")["device"]["buttons"]
+    assert (cfg["left"], cfg["right"], cfg["mute"]) == (0x02, 0x01, 0x04)
+    assert GestureDetector().bits == {"left": 0x02, "right": 0x01, "mute": 0x04}
+
+
+def test_no_builtin_pattern_lights_both_colors_on_one_ear():
+    from wurubururu.leds import ear_conflict
+    for name, steps in BUILTIN.items():
+        assert not any(ear_conflict(v) for v, _ in steps), name
+
+
 def test_color_meaning_matches_hardware():
     """기기 확인 결과: 0x80 왼빨, 0x40 왼초, 0x20 오빨, 0x10 오초. 급함은 빨강만, 보통은 초록만."""
     red, green = 0xA0, 0x50
@@ -53,7 +66,7 @@ def test_color_meaning_matches_hardware():
 def test_click_long_double():
     det = GestureDetector()
     det.feed(0, 0.0)
-    seq, t = press(det, 0x01, 0.1, 0.1)
+    seq, t = press(det, 0x02, 0.1, 0.1)
     idle = [(0, t + i * 0.02) for i in range(30)]
     assert feed(det, seq + idle) == [("left", "click")]
 
@@ -62,9 +75,9 @@ def test_click_long_double():
     assert feed(det, seq + [(0, t), (0, t + 0.02), (0, t + 0.5)]) == [("mute", "long")]
 
     det = GestureDetector(); det.feed(0, 0.0)
-    a, t = press(det, 0x02, 0.1, 0.08)
+    a, t = press(det, 0x01, 0.1, 0.08)
     gap = [(0, t), (0, t + 0.02), (0, t + 0.04)]
-    b, t2 = press(det, 0x02, t + 0.1, 0.08)
+    b, t2 = press(det, 0x01, t + 0.1, 0.08)
     tail = [(0, t2 + i * 0.02) for i in range(30)]
     assert feed(det, a + gap + b + tail) == [("right", "double")]
 
@@ -73,7 +86,7 @@ def test_buttons_work_when_idle_level_is_high():
     """눌렀을 때 비트가 0이 되는 배선이어도 동작해야 한다."""
     det = GestureDetector()
     det.feed(0x07, 0.0)
-    seq, t = press(det, 0x06, 0.1, 0.1)      # bit0 이 0으로 떨어짐 = 왼발 누름
+    seq, t = press(det, 0x05, 0.1, 0.1)      # bit1 이 0으로 떨어짐 = 왼발 누름
     idle = [(0x07, t + i * 0.02) for i in range(30)]
     assert feed(det, seq + idle) == [("left", "click")]
 

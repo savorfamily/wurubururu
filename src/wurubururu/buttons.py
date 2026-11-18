@@ -12,7 +12,8 @@ from typing import Callable
 
 from .device import Device, DeviceError
 
-DEFAULT_BITS = {"left": 0x01, "right": 0x02, "mute": 0x04}
+# 실제 기기에서 확인 (macOS, 2026-11-18). 누르면 비트가 1이 된다.
+DEFAULT_BITS = {"left": 0x02, "right": 0x01, "mute": 0x04}
 
 
 class GestureDetector:

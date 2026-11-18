@@ -15,6 +15,7 @@ Step = tuple[int, int]
 TICK = 0.1
 
 # 실제 기기에서 확인한 비트 배치 (macOS, 2026-11-18)
+# 귀마다 다리 두 개짜리 2색 LED라서 같은 귀의 빨강·초록을 동시에 켜면 꺼진다 (노랑 불가).
 L_RED, L_GREEN, R_RED, R_GREEN = 0x80, 0x40, 0x20, 0x10
 RED = L_RED | R_RED
 GREEN = L_GREEN | R_GREEN
@@ -36,9 +37,14 @@ BUILTIN: dict[str, list[Step]] = {
     # 켜 두기
     "solid_left": [(L_GREEN, 10)],
     "solid_right": [(R_GREEN, 10)],
-    "test": [(L_RED, 3), (L_GREEN, 3), (R_RED, 3), (R_GREEN, 3), (0xF0, 3)],
+    "test": [(L_RED, 3), (L_GREEN, 3), (R_RED, 3), (R_GREEN, 3), (RED, 3), (GREEN, 3)],
     "off": [(0x00, 1)],
 }
+
+
+def ear_conflict(value: int) -> bool:
+    """같은 귀의 빨강·초록을 함께 켜는 값인지 (그 귀는 꺼진다)."""
+    return (value & 0xC0) == 0xC0 or (value & 0x30) == 0x30
 
 
 def parse_pattern(spec) -> list[Step]:

@@ -134,7 +134,7 @@ class MockDevice(Device):
         self.history.append(self.leds)
         if self.verbose:
             def ear(red, green):
-                return {0: "··", red: "빨", green: "초", red | green: "빨초"}[self.leds & (red | green)]
+                return {0: "··", red: "빨", green: "초", red | green: "××"}[self.leds & (red | green)]
             print(f"[mock LED] 왼쪽 {ear(0x80, 0x40):<2}  오른쪽 {ear(0x20, 0x10):<2}  ({self.leds:#04x})")
 
     def read_buttons(self) -> int:

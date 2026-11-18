@@ -5,7 +5,7 @@
   wurubururu leds                LED 비트 하나씩 점등 (어느 귀·어느 색인지 확인용)
   wurubururu buttons             버튼 값 실시간 표시 (어느 비트가 어느 버튼인지 확인용)
   wurubururu blink <패턴> [횟수]  LED 패턴 재생 (green_left, urgent, alarm, both ...)
-  wurubururu led <값> [초]       LED에 값을 그대로 씀 (예: 0xC0 = 왼쪽 빨강+초록)
+  wurubururu led <값> [초]       LED에 값을 그대로 씀 (예: 0x90 = 왼쪽 빨강 + 오른쪽 초록)
   wurubururu notify "제목" [본문] 실행 중인 프로그램에 알림 보내기 (작업 완료 알림 등)
   wurubururu say "문장"           우르부르 스피커로 말하기
   wurubururu ai "질문"            설정된 AI 연결 시험
@@ -67,6 +67,9 @@ def cmd_blink(args, cfg):
 
 
 def cmd_led(args, cfg):
+    from .leds import ear_conflict
+    if ear_conflict(args.value):
+        print("주의: 같은 귀의 빨강·초록을 동시에 켜면 그 귀는 꺼집니다")
     dev = open_device(mock=args.mock, verbose=args.mock)
     dev.write_leds(args.value)
     time.sleep(args.seconds)

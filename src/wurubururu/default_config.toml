@@ -4,10 +4,10 @@
 [device]
 mock = false                 # true면 기기 없이 화면에 LED 상태만 출력
 
-[device.buttons]             # 어느 비트가 어느 버튼인지 (wurubururu buttons 로 확인 후 수정)
-left = 0x01
-right = 0x02
-mute = 0x04
+[device.buttons]             # 어느 비트가 어느 버튼인지 (실기기 확인값)
+left = 0x02                  # 왼발
+right = 0x01                 # 오른발
+mute = 0x04                  # 머리
 long_ms = 700
 double_ms = 350
 
@@ -81,6 +81,7 @@ port = 8737
 #   red_left, red_right, urgent, alarm    빨강 깜빡임 (alarm은 좌우 번갈아)
 #   left, right, both                     원본 WebToy 패턴 (빨강·초록 교대)
 #   직접 지정: [[값, 0.1초 단위], ...]  값: 왼쪽 빨강 0x80, 왼쪽 초록 0x40, 오른쪽 빨강 0x20, 오른쪽 초록 0x10
+#   같은 귀의 빨강·초록을 함께 켜면 그 귀는 꺼집니다 (노랑 불가)
 [patterns]
 "mail.urgent" = "urgent"
 "mail.normal" = "green_left"

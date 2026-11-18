@@ -7,12 +7,12 @@
 책상 위 알림 단말로 되살립니다.
 
 - **지원:** macOS (Apple Silicon 포함), Windows 11
-- **상태:** 0.1 — 원본 프로그램 분석으로 복원한 프로토콜로 macOS에서 LED 제어를 확인했습니다. 버튼과 Windows는 확인 중입니다.
+- **상태:** 0.1 — 원본 프로그램 분석으로 복원한 프로토콜로 macOS에서 LED와 버튼을 확인했습니다. Windows 11은 확인 중입니다.
 - 그림은 기능을 설명하는 삽화입니다. 실제 귀는 빨강과 초록 두 색으로 켜집니다.
 
 ## 무엇을 해주나
 
-**귀 색의 뜻:** 초록은 보통 알림, 빨강은 급한 알림입니다.
+**귀 색의 뜻:** 초록은 보통 알림, 빨강(주황빛)은 급한 알림입니다. 귀 하나에 한 색씩만 켜집니다.
 
 ### 알려주기
 
@@ -92,10 +92,10 @@ pip install "wurubururu[all] @ git+https://github.com/savorfamily/wurubururu"
 ```
 wurubururu info       # 기기가 잡히는지
 wurubururu leds       # 귀 네 개 LED가 차례로 켜지는지
-wurubururu buttons    # 어느 버튼이 어느 비트인지
+wurubururu buttons    # 버튼을 누르면 값이 찍히는지 (왼발 0x02, 오른발 0x01, 머리 0x04)
 ```
 
-버튼 비트가 기본값과 다르면 설정 파일의 `[device.buttons]`를 고칩니다.
+다른 값이 나오면 설정 파일의 `[device.buttons]`를 고칩니다.
 기기 없이 둘러보려면 `wurubururu --mock run`.
 
 ## 실행
@@ -110,7 +110,7 @@ wurubururu run        # 상주 실행. 설정 화면: http://127.0.0.1:8737/
 
 ```
 wurubururu blink urgent          # LED 패턴 재생 (green_left, urgent, alarm, pulse ...)
-wurubururu led 0xC0              # LED에 값을 직접 씀 (0x80 왼빨, 0x40 왼초, 0x20 오빨, 0x10 오초)
+wurubururu led 0x90              # LED에 값을 직접 씀 (0x80 왼빨, 0x40 왼초, 0x20 오빨, 0x10 오초)
 wurubururu notify "배포 끝" --urgent
 wurubururu say "점심 먹을 시간"
 wurubururu ai "안녕"              # AI 연결 시험
