@@ -161,6 +161,11 @@ def cmd_run(args, cfg):
 
 
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):   # 한글을 못 찍는 콘솔에서도 죽지 않게
+        try:
+            stream.reconfigure(errors="replace")
+        except Exception:
+            pass
     p = argparse.ArgumentParser(prog="wurubururu", description="우르부르 알림 단말",
                                 epilog=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--version", action="version", version=__version__)

@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+env:
+  PYTHONUTF8: "1"          # 윈도우 빌드 서버 콘솔에서도 한글 출력
+  PYTHONIOENCODING: utf-8
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -37,7 +41,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: 설치
-        run: pip install ".[all]" pyinstaller
+        # cryptography를 직접 컴파일하면 시스템 OpenSSL과 묶여 앱 안에서 깨진다 (인텔 맥). 미리 빌드된 것만 쓴다.
+        run: pip install --only-binary=cryptography,cffi ".[all]" pyinstaller
       - name: 아이콘
         run: python packaging/make_icons.py
       - name: 앱 빌드
