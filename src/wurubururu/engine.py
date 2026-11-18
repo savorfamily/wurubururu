@@ -39,6 +39,7 @@ class Engine:
         self.alerts: list[Alert] = []
         self._posted: set[tuple[str, str]] = set()   # 이미 알린 사건 (확인 후 다시 울리지 않게)
         self.log: deque[str] = deque(maxlen=80)
+        self.echo = False   # True면 기록을 터미널에도 출력
         self.dnd_until = 0.0
         self.focus_until = 0.0
         self._focus_timer: threading.Timer | None = None
@@ -50,6 +51,8 @@ class Engine:
             bits={k: int(b[k]) for k in ("left", "right", "mute") if k in b} or None,
             long_ms=int(b.get("long_ms", 700)), double_ms=int(b.get("double_ms", 350)))
         self.buttons = ButtonWatcher(device, self.on_button, detector)
+        self.leds.on_error = lambda m: self.note(f"LED 오류: {m}")
+        self.buttons.on_error = lambda m: self.note(f"버튼 오류: {m}")
         self.sources: list = []
         self._threads: list[threading.Thread] = []
         self._stop = threading.Event()
@@ -94,7 +97,10 @@ class Engine:
             self._stop.wait(src.interval)
 
     def note(self, msg: str) -> None:
-        self.log.append(f"{time.strftime('%H:%M:%S')} {msg}")
+        line = f"{time.strftime('%H:%M:%S')} {msg}"
+        self.log.append(line)
+        if self.echo:
+            print(line, flush=True)
 
     # ---- 알림 -------------------------------------------------------
     @property

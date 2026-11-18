@@ -18,6 +18,7 @@ import argparse
 import json
 import sys
 import time
+import urllib.error
 import urllib.request
 
 from . import __version__, actions, config
@@ -84,7 +85,10 @@ def cmd_notify(args, cfg):
         headers={"Content-Type": "application/json", "X-Wurubururu-Token": config.web_token()})
     try:
         with urllib.request.urlopen(req, timeout=5) as r:
-            print(r.read().decode())
+            ok = json.loads(r.read().decode()).get("ok")
+        print("알림을 보냈습니다" if ok else "같은 알림이 이미 있어서 무시됐습니다")
+    except urllib.error.HTTPError as e:
+        sys.exit(f"우르부르가 알림을 거절했습니다 (HTTP {e.code})")
     except OSError as e:
         sys.exit(f"실행 중인 우르부르에 연결하지 못했습니다 (wurubururu run 먼저): {e}")
 
@@ -136,7 +140,10 @@ def cmd_run(args, cfg):
         print(f"AI 설정 오류, AI 없이 실행합니다: {e}")
         provider = None
     engine = Engine(cfg, dev, provider)
+    engine.echo = True
     engine.sources = build_sources(cfg)
+    print(f"기기: {'가짜 장치(mock)' if mock else '우르부르 연결됨'}  /  AI: {provider.name if provider else '없음'}"
+          f"  /  알림 소스: {', '.join(s.name for s in engine.sources) or '없음'}")
     engine.start()
     port = int(cfg.get("web", {}).get("port", 8737))
     web.start(engine, port)

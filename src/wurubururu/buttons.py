@@ -83,6 +83,7 @@ class ButtonWatcher:
         self.detector = detector or GestureDetector()
         self.interval = interval
         self.error: str | None = None
+        self.on_error = None
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, name="wurubururu-buttons", daemon=True)
 
@@ -100,6 +101,8 @@ class ButtonWatcher:
                 raw = self.device.read_buttons()
                 self.error = None
             except DeviceError as e:
+                if self.error != str(e) and self.on_error:
+                    self.on_error(str(e))
                 self.error = str(e)
                 self._stop.wait(2)
                 continue

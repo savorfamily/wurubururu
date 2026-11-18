@@ -68,6 +68,7 @@ class LedPlayer:
         self._stop = threading.Event()
         self._lock = threading.Lock()
         self.error: str | None = None
+        self.on_error = None   # 오류가 새로 생기면 불릴 함수
         self._thread = threading.Thread(target=self._run, name="wurubururu-led", daemon=True)
         self._thread.start()
 
@@ -93,6 +94,8 @@ class LedPlayer:
             self.device.write_leds(value)
             self.error = None
         except DeviceError as e:
+            if self.error != str(e) and self.on_error:
+                self.on_error(str(e))
             self.error = str(e)
 
     def _play(self, steps: list[Step], interruptible: bool) -> bool:
