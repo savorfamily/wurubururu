@@ -8,6 +8,14 @@
 
 ## 맥에서 처음 열 때
 
+터미널에 아래 한 줄을 붙여넣으면 설치·업데이트가 한 번에 끝나고 보안 경고도 뜨지 않습니다.
+
+```
+curl -fsSL https://raw.githubusercontent.com/savorfamily/wurubururu/main/install.sh | bash
+```
+
+직접 설치할 때는:
+
 1. dmg를 열고 `wurubururu`를 응용 프로그램 폴더로 끌어다 놓습니다.
 2. 응용 프로그램 폴더에서 `wurubururu`를 **우클릭 → 열기**를 누르고, 경고 창에서 다시 **열기**를 누릅니다.
    서명하지 않은 앱이라 처음 한 번만 이렇게 열어야 합니다.
