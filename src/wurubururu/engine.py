@@ -131,7 +131,7 @@ class Engine:
 
     def post(self, alert: Alert) -> bool:
         if alert.priority == "ignore":
-            self.note(f"무시: {alert.title}")
+            self.note(f"무시: {self._label(alert)}")
             return False
         with self._lock:
             if alert.key:
@@ -142,7 +142,7 @@ class Engine:
                     self._posted = {(a.kind, a.key) for a in self.alerts}
             self.alerts.append(alert)
             del self.alerts[:-50]
-        self.note(f"알림 [{alert.kind}/{alert.priority}] {alert.title}")
+        self.note(f"알림 [{alert.kind}/{alert.priority}] {self._label(alert)}")
         self.refresh_leds()
         return True
 
@@ -177,9 +177,15 @@ class Engine:
             self.note(f"LED 패턴 오류: {e}")
             self.leds.set_base("pulse")
 
-    def say(self, text: str) -> None:
+    @staticmethod
+    def _label(alert: "Alert") -> str:
+        """기록용 이름. Gmail·캘린더 내용(보낸 사람·제목·일정 이름)은 기록 파일에 남기지 않는다."""
+        return "(Google 항목, 내용은 기록하지 않음)" if alert.kind in GOOGLE_KINDS else alert.title
+
+    def say(self, text: str, private: bool = False) -> None:
+        """말하기. private=True면 내용을 기록에 남기지 않는다 (Google 정보)."""
         if text:
-            self.note(f"말하기: {text[:60]}")
+            self.note("말하기 (Google 항목)" if private else f"말하기: {text[:60]}")
             self._speak(text, self.cfg.get("speech", {}))
 
     # ---- AI ---------------------------------------------------------
@@ -221,7 +227,7 @@ class Engine:
                 text = self.provider.summarize(top.title, top.body)
             except AIError as e:
                 self.note(f"AI 요약 실패: {e}")
-        self.say(text or top.title)
+        self.say(text or top.title, private=top.kind in GOOGLE_KINDS)
 
     def ack_all(self) -> None:
         with self._lock:
@@ -282,7 +288,7 @@ class Engine:
                 except AIError as e:
                     self.note(f"AI 브리핑 실패: {e}")
             parts.append(text or f"그 밖의 알림 {len(other)}건. " + ". ".join(other[:5]))
-        self.say(" ".join(parts))
+        self.say(" ".join(parts), private=bool(google))
 
     # ---- 상태 -------------------------------------------------------
     def status(self) -> dict:

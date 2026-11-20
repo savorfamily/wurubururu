@@ -133,7 +133,7 @@ curl -fsSL https://raw.githubusercontent.com/savorfamily/wurubururu/main/install
 | Claude (API 키) | [Claude Console](https://platform.claude.com/settings/keys) API 키 | Pro 구독과 별도 과금 |
 | Claude (Claude Code 구독 사용) | 설치·로그인된 Claude Code | Claude 구독(Pro 등) 사용량으로 동작, 키 불필요 |
 | Grok | [xAI](https://console.x.ai) API 키 | |
-| 사용 안 함 | 없음 | 분류·요약 없이 모든 메일을 보통 알림으로 처리 |
+| 사용 안 함 | 없음 | 요약 없이 알림 제목을 그대로 읽음 |
 
 **개인정보:** 우르부르르는 메일 본문을 읽지 않고(Gmail 머리글 전용 권한), **Gmail·캘린더 정보는 AI로 보내지 않습니다.** AI는 사이트 장애·외부 알림처럼 Google 밖의 알림을 요약하는 데만 씁니다. 개발자 서버는 없으며 모든 처리는 각자의 컴퓨터에서 합니다. 자세한 내용은 [개인정보처리방침](https://savorfamily.github.io/privacy.html).
 

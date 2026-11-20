@@ -218,6 +218,9 @@ def test_google_data_is_never_sent_to_ai():
         assert "사이트 응답 없음" in joined
         assert "연봉" not in joined and "병원" not in joined, "Google 정보가 AI로 넘어가면 안 된다"
         assert "연봉 협상" in said[-1] and "AI 요약" in said[-1], "Google 항목은 그대로 읽고 나머지는 AI로"
+        log = "\n".join(eng.log)
+        assert "연봉" not in log and "병원" not in log, "Google 정보는 기록 파일에 남기지 않는다"
+        assert "사이트 응답 없음" in log
     finally:
         eng.stop()
 
