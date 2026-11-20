@@ -14,6 +14,10 @@ from .device import Device
 from .leds import LedPlayer
 
 _ids = itertools.count(1)
+
+# Google(Gmail·캘린더)에서 온 정보는 AI로 보내지 않는다.
+# Google API 사용자 데이터 정책(Limited Use)상 AI 학습에 쓰일 수 있는 곳으로 넘기지 않기 위해서다.
+GOOGLE_KINDS = ("mail", "calendar")
 _print_lock = threading.Lock()   # 여러 스레드의 기록이 한 줄에 섞이지 않게
 
 
@@ -179,15 +183,6 @@ class Engine:
             self._speak(text, self.cfg.get("speech", {}))
 
     # ---- AI ---------------------------------------------------------
-    def triage_mail(self, sender: str, subject: str) -> dict:
-        """메일 분류. 사용자가 '메일 분류에 AI 사용'을 켰을 때만 보낸 사람·제목을 AI로 보낸다."""
-        if not self.provider or not self.cfg.get("ai", {}).get("classify_mail", False):
-            return {"priority": "normal", "summary": ""}
-        try:
-            return self.provider.triage(sender, subject)
-        except AIError as e:
-            self.note(f"AI 분류 실패: {e}")
-            return {"priority": "normal", "summary": ""}
 
     # ---- 버튼 명령 --------------------------------------------------
     def on_button(self, name: str, gesture: str) -> None:
@@ -221,7 +216,7 @@ class Engine:
             self.say("새 알림이 없습니다")
             return
         text = top.summary
-        if not text and self.provider and top.kind != "mail":
+        if not text and self.provider and top.kind not in GOOGLE_KINDS:
             try:
                 text = self.provider.summarize(top.title, top.body)
             except AIError as e:
@@ -266,20 +261,28 @@ class Engine:
         self.say(f"집중 시간이 끝났습니다. {rest}분 쉬세요")
 
     def briefing(self) -> None:
+        """브리핑. Gmail·캘린더 항목은 컴퓨터 안에서 그대로 읽고, 그 밖의 알림만 AI로 다듬는다."""
         with self._lock:
-            lines = [f"[{a.kind}] {a.title} {a.summary}".strip() for a in self.alerts]
+            alerts = list(self.alerts)
+        google = [f"{'메일' if a.kind == 'mail' else '일정'}, {a.title}" for a in alerts if a.kind in GOOGLE_KINDS]
         for src in self.sources:
-            lines += getattr(src, "briefing_lines", lambda: [])()
-        if not lines:
+            google += getattr(src, "briefing_lines", lambda: [])()
+        other = [f"[{a.kind}] {a.title} {a.summary}".strip() for a in alerts if a.kind not in GOOGLE_KINDS]
+        if not google and not other:
             self.say("전할 소식이 없습니다")
             return
-        text = ""
-        if self.provider:
-            try:
-                text = self.provider.briefing(lines)
-            except AIError as e:
-                self.note(f"AI 브리핑 실패: {e}")
-        self.say(text or f"알림 {len(lines)}건. " + ". ".join(lines[:5]))
+        parts = []
+        if google:
+            parts.append(f"Google 소식 {len(google)}건. " + ". ".join(google[:8]))
+        if other:
+            text = ""
+            if self.provider:
+                try:
+                    text = self.provider.briefing(other)
+                except AIError as e:
+                    self.note(f"AI 브리핑 실패: {e}")
+            parts.append(text or f"그 밖의 알림 {len(other)}건. " + ". ".join(other[:5]))
+        self.say(" ".join(parts))
 
     # ---- 상태 -------------------------------------------------------
     def status(self) -> dict:

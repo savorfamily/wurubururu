@@ -14,7 +14,7 @@ release_ms = 80              # 누르는 도중 이보다 짧게 끊기는 접�
 
 [ai]
 provider = "gemini"          # gemini | claude | grok | claude_cli | none
-classify_mail = false        # true면 새 메일의 보낸 사람·제목을 고른 AI 회사로 보내 급한지 가림 (본문은 읽지도 보내지도 않음)
+# Gmail·캘린더 정보는 AI로 보내지 않습니다. AI는 사이트 감시·외부 알림 등 Google 밖의 알림에만 씁니다.
 persona = ""                 # 말투 (보이스 스킨). 예: "딴지일보 말투로 능청스럽게"
 language = "한국어"
 
@@ -40,6 +40,8 @@ client_secret = ""           # 비워 두면 설정 폴더의 client_secret.json
 enabled = true
 interval = 60                # 초
 important_only = false       # true면 Gmail이 '중요'로 표시한 메일만 알림
+important_is_urgent = true   # Gmail '중요'·별표 메일은 급한 알림(빨강)
+ignore_promotions = true     # 프로모션·소셜·포럼 탭 메일은 알리지 않음
 
 [calendar]
 enabled = true

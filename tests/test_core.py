@@ -128,8 +128,6 @@ class FakeAI(ai.Provider):
     name = "fake"
     def __init__(self): super().__init__({}, {})
     def complete(self, system, prompt):
-        if "분류기" in system:
-            return '설명 {"priority": "urgent", "summary": "오늘 회신 필요"} 끝'
         return "요약문"
 
 
@@ -200,25 +198,38 @@ def test_dnd_hides_normal_but_not_urgent():
         eng.stop()
 
 
-def test_mail_classification_is_opt_in():
-    """메일 분류는 사용자가 켰을 때만 AI로 보낸다 (Google 심사·개인정보 기준)."""
-    eng, _, _ = make_engine()
-    sent = []
+def test_google_data_is_never_sent_to_ai():
+    """Gmail·캘린더 정보는 AI로 보내지 않는다 (Google Limited Use). 그 밖의 알림만 AI로 다듬는다."""
+    eng, said, _ = make_engine()
+    seen = []
     class Spy(FakeAI):
-        def triage(self, sender, subject):
-            sent.append((sender, subject))
-            return super().triage(sender, subject)
+        def complete(self, system, prompt):
+            seen.append(prompt)
+            return "AI 요약"
     eng.provider = Spy()
     try:
-        assert eng.triage_mail("a@b.c", "제목") == {"priority": "normal", "summary": ""}
-        assert sent == [], "기본값에서는 아무것도 AI로 보내지 않는다"
-        eng.cfg["ai"]["classify_mail"] = True
-        assert eng.triage_mail("a@b.c", "제목") == {"priority": "urgent", "summary": "오늘 회신 필요"}
-        assert sent == [("a@b.c", "제목")]
+        eng.post(Alert("mail", "김대리: 연봉 협상 건", key="m"))
+        eng.post(Alert("calendar", "10분 뒤: 병원 예약", key="c"))
+        eng.speak_latest()                       # 최신 = 일정 → AI 없이 제목을 그대로 읽음
+        assert seen == [] and said[-1] == "10분 뒤: 병원 예약"
+        eng.post(Alert("site", "사이트 응답 없음: https://a.example", priority="urgent", key="s"))
+        eng.briefing()
+        joined = "\n".join(seen)
+        assert "사이트 응답 없음" in joined
+        assert "연봉" not in joined and "병원" not in joined, "Google 정보가 AI로 넘어가면 안 된다"
+        assert "연봉 협상" in said[-1] and "AI 요약" in said[-1], "Google 항목은 그대로 읽고 나머지는 AI로"
     finally:
         eng.stop()
-    assert ai.parse_triage("엉뚱한 답")["priority"] == "normal"
-    assert ai.parse_triage('{"priority":"delete everything"}')["priority"] == "normal"
+
+
+def test_mail_priority_from_gmail_labels():
+    from wurubururu.sources.gmail import priority_from_labels as p
+    assert p(["INBOX", "UNREAD", "IMPORTANT"], {}) == "urgent"
+    assert p(["INBOX", "STARRED"], {}) == "urgent"
+    assert p(["INBOX", "CATEGORY_PROMOTIONS", "IMPORTANT"], {}) == "ignore"
+    assert p(["INBOX", "CATEGORY_UPDATES"], {}) == "normal"
+    assert p(["INBOX", "IMPORTANT"], {"important_is_urgent": False}) == "normal"
+    assert p(["INBOX", "CATEGORY_SOCIAL"], {"ignore_promotions": False}) == "normal"
 
 
 def test_minimal_google_scopes():
@@ -240,7 +251,7 @@ def test_gmail_uses_labels_not_search_and_reads_headers_only():
             calls.append(("list", kw)); return Req({"messages": [{"id": i} for i in self.ids]})
         def get(self, **kw):
             calls.append(("get", kw))
-            return Req({"threadId": "t2", "payload": {"headers": [
+            return Req({"threadId": "t2", "labelIds": ["INBOX", "UNREAD", "IMPORTANT"], "payload": {"headers": [
                 {"name": "From", "value": "김대리 <kim@example.com>"}, {"name": "Subject", "value": "견적"}]}})
     msgs = Messages()
     svc = type("S", (), {"users": lambda self: type("U", (), {"messages": lambda s: msgs})()})()
@@ -257,6 +268,7 @@ def test_gmail_uses_labels_not_search_and_reads_headers_only():
         assert gets and all(kw["format"] == "metadata" for kw in gets)
         top = eng.top()
         assert top.title == "김대리: 견적" and top.body == "" and top.url.endswith("#inbox/t2")
+        assert top.priority == "urgent", "Gmail '중요' 표시는 급한 알림"
     finally:
         eng.stop()
 

@@ -110,7 +110,8 @@
 
     <section id="ai">
       <h2>AI</h2>
-      <p class="desc">메일이 급한지 가려내고, 알림을 한두 문장으로 줄여 읽어줍니다. 없어도 프로그램은 동작합니다.</p>
+      <p class="desc">사이트 장애·외부 알림 같은 알림을 한두 문장으로 줄여 읽어주고 브리핑을 다듬습니다. 없어도 프로그램은 동작합니다.
+        <b>Gmail·캘린더 정보는 AI로 보내지 않습니다.</b></p>
       <div class="grid">
         <label for="provider">사용할 AI</label>
         <select id="provider" data-path="ai|provider">
@@ -123,12 +124,6 @@
       </div>
       <div id="aiDetail" style="margin-top:12px"></div>
       <div class="grid" style="margin-top:12px">
-        <label>새 메일 분류에 사용</label>
-        <div>
-          <label class="switch"><input type="checkbox" data-path="ai|classify_mail"> 켜기</label>
-          <p class="hint" style="margin:4px 0 0">켜면 새 메일의 <b>보낸 사람과 제목</b>을 위에서 고른 AI 회사로 보내 급한 메일을 가립니다.
-            우르부르르는 메일 본문을 읽지 않으며, 개발자 서버를 거치지 않습니다.</p>
-        </div>
         <label for="persona">말투 (보이스 스킨)</label>
         <input type="text" id="persona" data-path="ai|persona" placeholder="예: 딴지일보 말투로 능청스럽게">
       </div>
@@ -171,7 +166,12 @@
         <label>메일 확인 간격</label>
         <div class="row"><input type="number" min="15" data-path="gmail|interval"> 초</div>
         <label>알릴 메일</label>
-        <label class="switch"><input type="checkbox" data-path="gmail|important_only"> Gmail이 '중요'로 표시한 메일만</label>
+        <div>
+          <label class="switch"><input type="checkbox" data-path="gmail|important_only"> Gmail이 '중요'로 표시한 메일만</label><br>
+          <label class="switch"><input type="checkbox" data-path="gmail|ignore_promotions"> 프로모션·소셜·포럼 탭 메일은 알리지 않음</label>
+        </div>
+        <label>급한 메일 (빨강)</label>
+        <label class="switch"><input type="checkbox" data-path="gmail|important_is_urgent"> Gmail '중요'·별표 메일</label>
         <label>캘린더 일정 알림</label>
         <label class="switch"><input type="checkbox" data-path="calendar|enabled"> 켜기</label>
         <label>미리 알림</label>
