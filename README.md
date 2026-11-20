@@ -139,12 +139,11 @@ curl -fsSL https://raw.githubusercontent.com/savorfamily/wurubururu/main/install
 
 ## Gmail·캘린더 연결
 
-설정 화면 → Gmail·캘린더에 단계별 안내가 들어 있습니다. 요약하면 다음과 같습니다.
+설정 화면 → Gmail·캘린더에서 **Google로 로그인**을 누르고, 뜨는 Google 창에서 계정을 고른 뒤 **허용**하면 끝입니다.
 
-1. [Google Cloud 콘솔](https://console.cloud.google.com/)에서 프로젝트를 만들고 Gmail API와 Calendar API를 켭니다.
-2. Google 인증 플랫폼에서 앱을 만들고(대상: 외부), **게시 상태를 프로덕션**으로 바꿉니다. 테스트 상태로 두면 7일마다 다시 로그인해야 합니다.
-3. 클라이언트를 **데스크톱 앱** 유형으로 만들어 JSON을 내려받습니다.
-4. 설정 화면에서 **클라이언트 파일 올리기 → Google로 로그인**. "확인되지 않은 앱" 화면이 나오면 고급 → 이동을 누릅니다.
+- Google의 앱 심사가 끝나기 전에는 "Google에서 확인하지 않은 앱" 화면이 나올 수 있습니다. **고급 → wurubururu(으)로 이동**을 누르면 됩니다.
+- 연결을 끊으려면 같은 화면의 **연결 해제**를 누르거나 [Google 계정 권한 페이지](https://myaccount.google.com/permissions)에서 삭제합니다.
+- 직접 만든 Google Cloud 클라이언트를 쓰고 싶다면 같은 화면의 "고급"에서 클라이언트 JSON 파일을 올릴 수 있습니다.
 
 읽기 전용 권한만 요청하고, 비밀번호는 저장하지 않습니다.
 
