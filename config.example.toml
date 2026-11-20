@@ -14,7 +14,7 @@ release_ms = 80              # 누르는 도중 이보다 짧게 끊기는 접�
 
 [ai]
 provider = "gemini"          # gemini | claude | grok | claude_cli | none
-privacy = "headers"          # headers: 보낸 사람·제목만 전송 / snippet: 본문 미리보기도 전송
+classify_mail = false        # true면 새 메일의 보낸 사람·제목을 고른 AI 회사로 보내 급한지 가림 (본문은 읽지도 보내지도 않음)
 persona = ""                 # 말투 (보이스 스킨). 예: "딴지일보 말투로 능청스럽게"
 language = "한국어"
 
@@ -39,7 +39,7 @@ client_secret = ""           # 비워 두면 설정 폴더의 client_secret.json
 [gmail]
 enabled = true
 interval = 60                # 초
-query = "is:unread in:inbox newer_than:1d"
+important_only = false       # true면 Gmail이 '중요'로 표시한 메일만 알림
 
 [calendar]
 enabled = true

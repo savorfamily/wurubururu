@@ -135,7 +135,7 @@ curl -fsSL https://raw.githubusercontent.com/savorfamily/wurubururu/main/install
 | Grok | [xAI](https://console.x.ai) API 키 | |
 | 사용 안 함 | 없음 | 분류·요약 없이 모든 메일을 보통 알림으로 처리 |
 
-**개인정보:** 기본값은 보낸 사람과 제목만 AI로 보냅니다. "본문 미리보기 포함"을 고르면 요약이 좋아지는 대신 본문 일부도 보냅니다.
+**개인정보:** 우르부르르는 메일 본문을 읽지 않습니다(Gmail 머리글 전용 권한). "새 메일 분류에 사용"을 켠 경우에만 새 메일의 보낸 사람과 제목을 고른 AI 회사로 보내며, 개발자 서버는 거치지 않습니다. 자세한 내용은 [개인정보처리방침](https://savorfamily.github.io/privacy.html).
 
 ## Gmail·캘린더 연결
 

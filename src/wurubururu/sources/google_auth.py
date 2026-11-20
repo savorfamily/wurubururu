@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from .. import config
 
+# 필요한 만큼만 요청한다 (Google 심사 기준: 최소 범위)
+#   gmail.metadata          : 메일의 머리글(보낸 사람·제목·라벨)만. 본문과 첨부는 읽을 수 없다
+#   calendar.events.readonly: 일정 보기만. 수정 불가
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/gmail.metadata",
+    "https://www.googleapis.com/auth/calendar.events.readonly",
 ]
 TOKEN_FILE = "google_token.json"
 
@@ -65,6 +68,10 @@ def credentials(google_cfg: dict, interactive: bool = False):
     creds = None
     if token_path.exists():
         creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+        granted = set(creds.scopes or [])
+        if granted and not set(SCOPES) <= granted:   # 예전 범위로 받은 토큰이면 다시 로그인
+            token_path.unlink()
+            creds = None
     if creds and creds.valid:
         return creds
     if creds and creds.expired and creds.refresh_token:

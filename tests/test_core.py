@@ -200,22 +200,65 @@ def test_dnd_hides_normal_but_not_urgent():
         eng.stop()
 
 
-def test_triage_privacy_and_parsing():
+def test_mail_classification_is_opt_in():
+    """메일 분류는 사용자가 켰을 때만 AI로 보낸다 (Google 심사·개인정보 기준)."""
     eng, _, _ = make_engine()
-    seen = {}
+    sent = []
     class Spy(FakeAI):
-        def triage(self, sender, subject, snippet=""):
-            seen["snippet"] = snippet
-            return super().triage(sender, subject, snippet)
+        def triage(self, sender, subject):
+            sent.append((sender, subject))
+            return super().triage(sender, subject)
     eng.provider = Spy()
     try:
-        v = eng.triage_mail("a@b.c", "제목", "비밀 본문")
-        assert v == {"priority": "urgent", "summary": "오늘 회신 필요"}
-        assert seen["snippet"] == "", "기본값(headers)에서는 본문을 AI로 보내지 않는다"
+        assert eng.triage_mail("a@b.c", "제목") == {"priority": "normal", "summary": ""}
+        assert sent == [], "기본값에서는 아무것도 AI로 보내지 않는다"
+        eng.cfg["ai"]["classify_mail"] = True
+        assert eng.triage_mail("a@b.c", "제목") == {"priority": "urgent", "summary": "오늘 회신 필요"}
+        assert sent == [("a@b.c", "제목")]
     finally:
         eng.stop()
     assert ai.parse_triage("엉뚱한 답")["priority"] == "normal"
     assert ai.parse_triage('{"priority":"delete everything"}')["priority"] == "normal"
+
+
+def test_minimal_google_scopes():
+    from wurubururu.sources.google_auth import SCOPES
+    assert SCOPES == ["https://www.googleapis.com/auth/gmail.metadata",
+                      "https://www.googleapis.com/auth/calendar.events.readonly"]
+
+
+def test_gmail_uses_labels_not_search_and_reads_headers_only():
+    """gmail.metadata 범위에서는 검색어(q)를 쓸 수 없고 본문도 없다."""
+    from wurubururu.sources.gmail import GmailSource
+    calls = []
+    class Req:
+        def __init__(self, data): self.data = data
+        def execute(self): return self.data
+    class Messages:
+        def __init__(self): self.ids = ["m1"]
+        def list(self, **kw):
+            calls.append(("list", kw)); return Req({"messages": [{"id": i} for i in self.ids]})
+        def get(self, **kw):
+            calls.append(("get", kw))
+            return Req({"threadId": "t2", "payload": {"headers": [
+                {"name": "From", "value": "김대리 <kim@example.com>"}, {"name": "Subject", "value": "견적"}]}})
+    msgs = Messages()
+    svc = type("S", (), {"users": lambda self: type("U", (), {"messages": lambda s: msgs})()})()
+    src = GmailSource({"important_only": True}, {}, service=svc)
+    eng, _, _ = make_engine()
+    try:
+        src.poll(eng)                 # 처음에는 기존 메일을 기억만
+        assert eng.top() is None
+        msgs.ids = ["m2", "m1"]
+        src.poll(eng)
+        lists = [kw for c, kw in calls if c == "list"]
+        assert all("q" not in kw and kw["labelIds"] == ["INBOX", "UNREAD", "IMPORTANT"] for kw in lists)
+        gets = [kw for c, kw in calls if c == "get"]
+        assert gets and all(kw["format"] == "metadata" for kw in gets)
+        top = eng.top()
+        assert top.title == "김대리: 견적" and top.body == "" and top.url.endswith("#inbox/t2")
+    finally:
+        eng.stop()
 
 
 @pytest.mark.parametrize("name,response,expect_url,expect_header", [

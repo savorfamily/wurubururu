@@ -179,13 +179,12 @@ class Engine:
             self._speak(text, self.cfg.get("speech", {}))
 
     # ---- AI ---------------------------------------------------------
-    def triage_mail(self, sender: str, subject: str, snippet: str) -> dict:
-        if not self.provider:
+    def triage_mail(self, sender: str, subject: str) -> dict:
+        """메일 분류. 사용자가 '메일 분류에 AI 사용'을 켰을 때만 보낸 사람·제목을 AI로 보낸다."""
+        if not self.provider or not self.cfg.get("ai", {}).get("classify_mail", False):
             return {"priority": "normal", "summary": ""}
-        if self.cfg.get("ai", {}).get("privacy", "headers") != "snippet":
-            snippet = ""
         try:
-            return self.provider.triage(sender, subject, snippet)
+            return self.provider.triage(sender, subject)
         except AIError as e:
             self.note(f"AI 분류 실패: {e}")
             return {"priority": "normal", "summary": ""}

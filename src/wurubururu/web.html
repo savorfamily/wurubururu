@@ -123,10 +123,11 @@
       </div>
       <div id="aiDetail" style="margin-top:12px"></div>
       <div class="grid" style="margin-top:12px">
-        <label>AI에 보낼 내용</label>
-        <div class="row">
-          <label class="switch"><input type="radio" name="privacy" value="headers" data-path="ai|privacy"> 보낸 사람·제목만</label>
-          <label class="switch"><input type="radio" name="privacy" value="snippet" data-path="ai|privacy"> 본문 미리보기 포함</label>
+        <label>새 메일 분류에 사용</label>
+        <div>
+          <label class="switch"><input type="checkbox" data-path="ai|classify_mail"> 켜기</label>
+          <p class="hint" style="margin:4px 0 0">켜면 새 메일의 <b>보낸 사람과 제목</b>을 위에서 고른 AI 회사로 보내 급한 메일을 가립니다.
+            우르부르르는 메일 본문을 읽지 않으며, 개발자 서버를 거치지 않습니다.</p>
         </div>
         <label for="persona">말투 (보이스 스킨)</label>
         <input type="text" id="persona" data-path="ai|persona" placeholder="예: 딴지일보 말투로 능청스럽게">
@@ -139,7 +140,8 @@
 
     <section id="google">
       <h2>Gmail · 캘린더</h2>
-      <p class="desc">Google 계정에 읽기 전용으로 연결합니다. 비밀번호는 저장하지 않습니다.</p>
+      <p class="desc">Google 계정에 읽기 전용으로 연결합니다. 메일은 보낸 사람·제목만 보고 본문은 읽지 않으며, 일정은 보기만 합니다.
+        모든 처리는 이 컴퓨터 안에서 하고, 비밀번호는 저장하지 않습니다. <a href="https://savorfamily.github.io/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>
       <div class="row" id="googleState" style="margin-bottom:12px"></div>
       <div class="row">
         <button class="primary" id="googleLogin">Google로 로그인</button>
@@ -168,8 +170,8 @@
         <label class="switch"><input type="checkbox" data-path="gmail|enabled"> 켜기</label>
         <label>메일 확인 간격</label>
         <div class="row"><input type="number" min="15" data-path="gmail|interval"> 초</div>
-        <label>확인할 메일</label>
-        <input type="text" data-path="gmail|query" title="Gmail 검색어 문법">
+        <label>알릴 메일</label>
+        <label class="switch"><input type="checkbox" data-path="gmail|important_only"> Gmail이 '중요'로 표시한 메일만</label>
         <label>캘린더 일정 알림</label>
         <label class="switch"><input type="checkbox" data-path="calendar|enabled"> 켜기</label>
         <label>미리 알림</label>
